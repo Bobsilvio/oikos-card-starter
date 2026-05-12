@@ -1,0 +1,31 @@
+name: stale
+
+on:
+  schedule:
+    - cron: '30 12 * * *'   # daily at 12:30 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 21
+          days-before-close: 7
+          stale-pr-message: >
+            This PR has been inactive for 21 days and is now marked as stale.
+            It will be closed in 7 days unless there is new activity.
+            If you still want to add your card to the registry, please
+            make sure all CI checks pass and push an update.
+          close-pr-message: >
+            This PR was closed due to inactivity.
+            Feel free to reopen it or open a new one when ready.
+          stale-pr-label: 'stale'
+          # Don't mark issues as stale — only PRs matter for the registry
+          days-before-issue-stale: -1
+          days-before-issue-close: -1

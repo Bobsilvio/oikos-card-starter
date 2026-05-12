@@ -8,60 +8,230 @@ on:
       - 'registry/smart-cards'
 
 jobs:
-  validate:
+  # ─── 1. Format + alphabetical order ─────────────────────────────────────────
+  lint:
+    name: Lint registry files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate format
+      - name: Validate format (author/repo per line)
         run: |
           set -e
           ERRORS=0
-
-          validate_file() {
-            local FILE="$1"
-            echo "→ Validating $FILE"
+          for f in registry/cards registry/html-cards registry/smart-cards; do
+            [ -f "$f" ] || continue
+            echo "→ $f"
             while IFS= read -r line || [ -n "$line" ]; do
               [[ -z "$line" || "$line" == \#* ]] && continue
               if ! echo "$line" | grep -qE '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$'; then
                 echo "  ✗ Invalid: '$line'  (expected: author/repo)"
                 ERRORS=$((ERRORS + 1))
               fi
-            done < "$FILE"
-            echo "  ✓ $FILE format OK"
-          }
-
-          for f in registry/cards registry/html-cards registry/smart-cards; do
-            [ -f "$f" ] && validate_file "$f"
+            done < "$f"
           done
-
-          [ "$ERRORS" -gt 0 ] && { echo "✗ $ERRORS error(s). Fix and push again."; exit 1; }
-          echo "✓ All files valid."
+          [ "$ERRORS" -gt 0 ] && { echo "✗ Format errors found."; exit 1; }
+          echo "✓ Format OK"
 
       - name: Check alphabetical order
         run: |
           set -e
           ERRORS=0
-
-          check_sorted() {
-            local FILE="$1"
-            local entries
-            entries=$(grep -v '^\s*#' "$FILE" | grep -v '^\s*$' || true)
-            [ -z "$entries" ] && return
-            local sorted
+          for f in registry/cards registry/html-cards registry/smart-cards; do
+            [ -f "$f" ] || continue
+            entries=$(grep -v '^\s*#' "$f" | grep -v '^\s*$' || true)
+            [ -z "$entries" ] && continue
             sorted=$(echo "$entries" | sort -f)
             if [ "$entries" != "$sorted" ]; then
-              echo "  ✗ $FILE is not alphabetical. Expected:"
-              echo "$sorted" | sed 's/^/    /'
+              echo "✗ $f is not alphabetical. Expected order:"
+              echo "$sorted" | sed 's/^/  /'
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          [ "$ERRORS" -gt 0 ] && exit 1
+          echo "✓ Alphabetical order OK"
+
+      - name: Check no duplicates
+        run: |
+          set -e
+          ERRORS=0
+          for f in registry/cards registry/html-cards registry/smart-cards; do
+            [ -f "$f" ] || continue
+            entries=$(grep -v '^\s*#' "$f" | grep -v '^\s*$' || true)
+            [ -z "$entries" ] && continue
+            dupes=$(echo "$entries" | sort -f | uniq -di)
+            if [ -n "$dupes" ]; then
+              echo "✗ Duplicates in $f:"
+              echo "$dupes" | sed 's/^/  /'
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          [ "$ERRORS" -gt 0 ] && exit 1
+          echo "✓ No duplicates"
+
+  # ─── 2. Check newly added repos ──────────────────────────────────────────────
+  check-repos:
+    name: Check submitted repos
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get added repos from this PR
+        id: diff
+        run: |
+          # Lines added in this PR across all registry files
+          added=$(git diff origin/main...HEAD -- registry/cards registry/html-cards registry/smart-cards \
+            | grep '^+[^+#]' | grep -v '^+++' | sed 's/^+//' | grep -v '^\s*$' || true)
+          echo "Added repos:"
+          echo "$added"
+          # Save as multiline output
+          {
+            echo 'repos<<EOF'
+            echo "$added"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check repos exist and are public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ERRORS=0
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            [ -z "$repo" ] && continue
+            echo "→ Checking $repo"
+            status=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$repo")
+            if [ "$status" = "404" ]; then
+              echo "  ✗ Repo not found or private: $repo"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+            # Check it's not archived
+            archived=$(curl -s \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$repo" | grep '"archived"' | grep -o 'true\|false')
+            if [ "$archived" = "true" ]; then
+              echo "  ✗ Repo is archived: $repo"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+            echo "  ✓ $repo exists and is public"
+          done <<< "${{ steps.diff.outputs.repos }}"
+          [ "$ERRORS" -gt 0 ] && exit 1
+
+      - name: Check repos have at least one release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ERRORS=0
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            [ -z "$repo" ] && continue
+            count=$(curl -s \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$repo/releases?per_page=1" \
+              | grep -c '"tag_name"' || true)
+            if [ "$count" -lt 1 ]; then
+              echo "✗ No releases found for $repo"
+              echo "  Publish at least one GitHub Release before submitting."
               ERRORS=$((ERRORS + 1))
             else
-              echo "  ✓ $FILE sorted"
+              echo "✓ $repo has releases"
             fi
-          }
+          done <<< "${{ steps.diff.outputs.repos }}"
+          [ "$ERRORS" -gt 0 ] && exit 1
 
-          for f in registry/cards registry/html-cards registry/smart-cards; do
-            [ -f "$f" ] && check_sorted "$f"
-          done
+      - name: Check submitter owns the repo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -e
+          ERRORS=0
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            [ -z "$repo" ] && continue
+            owner=$(echo "$repo" | cut -d'/' -f1)
+            # Allow if PR author is the repo owner
+            if [ "${owner,,}" = "${PR_AUTHOR,,}" ]; then
+              echo "✓ $repo — submitter is the owner"
+              continue
+            fi
+            # Also allow if PR author is a collaborator/contributor with push access
+            perm=$(curl -s \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$repo/collaborators/$PR_AUTHOR/permission" \
+              | grep '"permission"' | grep -o '"[^"]*"$' | tr -d '"')
+            if [[ "$perm" == "admin" || "$perm" == "write" || "$perm" == "maintain" ]]; then
+              echo "✓ $repo — submitter has push access ($perm)"
+              continue
+            fi
+            echo "✗ $repo — submitter '$PR_AUTHOR' is not the owner or a collaborator."
+            echo "  Only the repo owner or contributors with push access can submit."
+            ERRORS=$((ERRORS + 1))
+          done <<< "${{ steps.diff.outputs.repos }}"
+          [ "$ERRORS" -gt 0 ] && exit 1
+
+  # ─── 3. Validate manifest.json for JAVA card repos ───────────────────────────
+  validate-manifest:
+    name: Validate manifest.json (JAVA cards)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check manifest.json of new JAVA card repos
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ERRORS=0
+
+          # Only look at newly added lines in registry/cards
+          added=$(git diff origin/main...HEAD -- registry/cards \
+            | grep '^+[^+#]' | grep -v '^+++' | sed 's/^+//' | grep -v '^\s*$' || true)
+
+          [ -z "$added" ] && { echo "No new JAVA cards added."; exit 0; }
+
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            [ -z "$repo" ] && continue
+            echo "→ Fetching manifest.json for $repo"
+
+            # Try root manifest.json first, then cards/*/manifest.json via API
+            manifest=$(curl -s \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github.raw" \
+              "https://api.github.com/repos/$repo/contents/manifest.json" 2>/dev/null || true)
+
+            if [ -z "$manifest" ] || echo "$manifest" | grep -q '"message"'; then
+              echo "  ⚠  No root manifest.json found — skipping manifest check for $repo"
+              continue
+            fi
+
+            # Validate required fields
+            for field in id name version sdkVersion entry; do
+              if ! echo "$manifest" | grep -q "\"$field\""; then
+                echo "  ✗ manifest.json missing required field: $field"
+                ERRORS=$((ERRORS + 1))
+              fi
+            done
+
+            # Validate sdkVersion format (must start with ^ or be semver)
+            sdkVersion=$(echo "$manifest" | grep '"sdkVersion"' | grep -oP '"\^\d+\.\d+\.\d+"|"\d+\.\d+\.\d+"' | tr -d '"' || true)
+            if [ -z "$sdkVersion" ]; then
+              echo "  ✗ sdkVersion missing or invalid format (expected e.g. \"^1.1.0\")"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "  ✓ sdkVersion: $sdkVersion"
+            fi
+
+            echo "  ✓ manifest.json looks valid for $repo"
+          done <<< "$added"
 
           [ "$ERRORS" -gt 0 ] && exit 1
-          echo "✓ Order OK."
