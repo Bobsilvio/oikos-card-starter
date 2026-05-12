@@ -8,6 +8,7 @@
     "build": "node tools/build-card.mjs",
     "pack": "node tools/pack-card.mjs",
     "build:my": "node tools/build-card.mjs cards/my-card && node tools/pack-card.mjs cards/my-card",
+    "pack:git": "node tools/pack-git.mjs",
     "build:all": "for d in cards/*/; do case \"$d\" in cards/_*) continue;; esac; [ -d \"${d}src\" ] && node tools/build-card.mjs \"$d\"; done && node tools/generate-manifest.mjs",
     "manifest": "node tools/generate-manifest.mjs",
     "build:examples": "for d in examples/*/; do node tools/build-card.mjs \"$d\"; done"

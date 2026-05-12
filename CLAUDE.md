@@ -11,10 +11,11 @@ dettagliate in `SKILL.md`** (root di questo repo).
   card aggiuntive
 - 3 esempi di riferimento in `examples/` (hello-world, sensor-display,
   light-toggle, html-counter)
-- Build + pack ZIP: `npm run build:my` (per la card "my-card") oppure
+- Build + pack ZIP: `npm run build:my` oppure
   `npm run build cards/<id>/` + `npm run pack -- cards/<id>`
-- L'output è uno ZIP in `dist-cards/<id>-<version>.zip` che l'utente
-  carica via dashboard → Store → Comunità → JAVA
+- Output ZIP → `dist-cards/<id>-<version>.zip` → Store → Comunità → JAVA → Carica ZIP
+- Repo GitHub standalone: `npm run pack:git -- cards/<id>`
+  → `dist-cards/<id>-git/` pronto per `git init` + push + tag
 
 ## Workflow tipico quando l'utente chiede una nuova card
 
@@ -24,9 +25,11 @@ dettagliate in `SKILL.md`** (root di questo repo).
    `react` + `lucide-react`)
 4. Se servono impostazioni: scrivi `cards/my-card/src/Settings.jsx`
 5. Lancia `npm install` (solo la prima volta in una sessione)
-6. Lancia `npm run build:my`
-7. Riporta all'utente il path esatto dello ZIP generato
-8. Ricorda all'utente: **Store → Comunità → JAVA → Carica ZIP**
+6. Lancia `npm run build cards/<id>/`
+7. Se vuole pubblicare su GitHub: `npm run pack:git -- cards/<id>`
+   → mostra `dist-cards/<id>-git/` e i comandi git da eseguire
+8. Se vuole solo uno ZIP locale: `npm run pack -- cards/<id>`
+   → mostra il path ZIP + **Store → Comunità → JAVA → Carica ZIP**
 
 ## Vincoli importanti
 

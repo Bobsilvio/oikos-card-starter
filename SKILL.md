@@ -441,8 +441,9 @@ const pkg = usePackageInstaller({ name: 'my_package', yaml: TPL })
 ```bash
 npm install                    # first time only
 npm run build cards/<id>/      # → cards/<id>/dist/<id>.js + <id>.settings.js
-npm run pack  -- cards/<id>    # → dist-cards/<id>-<version>.zip
-npm run build:my               # shortcut: build + pack "my-card"
+npm run pack  -- cards/<id>    # → dist-cards/<id>-<version>.zip  (installazione manuale)
+npm run pack:git -- cards/<id> # → dist-cards/<id>-git/           (repo GitHub standalone)
+npm run build:my               # shortcut: build + pack ZIP "my-card"
 npm run build:all              # build all cards/* + regenerate root manifest.json
 npm run manifest               # regenerate root manifest.json only
 ```
@@ -451,23 +452,64 @@ Build requires only a valid `manifest.json` + `src/Card.jsx` with a default expo
 `Settings.jsx` is optional. `preview.png` and `template.yaml` are automatically
 included in the ZIP if present.
 
-### Distributing via GitHub (recommended for public cards)
+---
 
-The starter includes `.github/workflows/release.yml`. On every `v*` tag push it:
-1. Builds all `cards/*/`
-2. Runs `npm run manifest` → generates root `manifest.json`
-3. Creates a GitHub Release with all dist files + manifest
+### Opzione A — ZIP (installazione manuale, nessun GitHub richiesto)
 
-**Workflow for the user:**
 ```bash
-# bump version in cards/<id>/manifest.json, then:
-git add cards/<id>/manifest.json
-git commit -m "release <id> v1.1.0"
-git tag v1.1.0
-git push origin main --tags
+npm run build cards/<id>/
+npm run pack  -- cards/<id>
+# → dist-cards/<id>-<version>.zip
 ```
 
-End users add the repo URL once in the dashboard → updates are automatic forever.
+Dashboard → **Store → Comunità → JAVA → Carica ZIP**.
+Nessun account GitHub necessario. Aggiornamenti manuali (ricarica ZIP ad ogni versione).
+Perfetto per test locali o card private.
+
+---
+
+### Opzione B — Repo GitHub standalone (aggiornamenti automatici)
+
+```bash
+npm run build cards/<id>/
+npm run pack:git -- cards/<id>
+# → dist-cards/<id>-git/  (repo pronto per GitHub)
+```
+
+`pack:git` genera una cartella autonoma con: tools, release workflow, manifest root,
+`.gitignore` corretto (senza `dist/`), README bilingue autogenerato.
+
+**Pubblica su GitHub:**
+```bash
+cd dist-cards/<id>-git
+git init && git checkout -b main
+git add .
+git commit -m "feat: <nome card> v1.0.0 — initial release"
+gh repo create <username>/<id> --public --source=. --remote=origin --push
+git tag v1.0.0 && git push origin main --tags
+```
+
+**Aggiungi al tuo dashboard:**
+Dashboard → Store → Comunità → JAVA → Aggiungi → `<username>/<id>`
+
+Il repo **non deve essere nel registry pubblico** per funzionare — puoi tenerlo
+privato (visibile solo a chi ha il link) e aggiungerlo solo al tuo dashboard.
+
+**Per renderla visibile a tutti (opzionale):**
+Apri una PR su `Bobsilvio/oikos-card-starter` → `registry/cards`
+e aggiungi `<username>/<id>` in ordine alfabetico.
+
+**Aggiornamenti:**
+```bash
+# bump version in cards/<id>/manifest.json, poi:
+npm run build cards/<id>/
+npm run pack:git -- cards/<id>
+cd dist-cards/<id>-git
+git add . && git commit -m "release v1.1.0"
+git tag v1.1.0 && git push origin main --tags
+```
+Il dashboard rileva la nuova versione e mostra il pulsante **Aggiorna**.
+
 See `docs/04-distribuzione.md` for the full guide.
 
 ---
