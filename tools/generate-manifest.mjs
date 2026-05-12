@@ -81,6 +81,7 @@ function collectCards() {
       tags:        mf.tags ?? [],
       package:     mf.package ?? null,
       tier:        mf.tier ?? 'free',
+      readme:      existsSync(join(dir, 'README.md')) ? `cards/${name}/README.md` : null,
     })
   }
   return out.sort((a, b) => a.id.localeCompare(b.id))
