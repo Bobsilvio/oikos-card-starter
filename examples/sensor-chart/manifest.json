@@ -1,0 +1,14 @@
+{
+  "id": "sensor-chart",
+  "name": "Sensor Chart",
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "Sensor current value with a recharts history sparkline. Demonstrates fetchHistory, useEffect, and chart rendering.",
+  "sdkVersion": "^1.1.0",
+  "hasSettings": true,
+  "entry": "dist/sensor-chart.js",
+  "settings": "dist/sensor-chart.settings.js",
+  "tags": ["example", "sensors", "charts"],
+  "configVersion": 1,
+  "defaultWidth": "half"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "oikos-card-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Template + tooling per creare card community per la dashboard Oikos.",
+  "scripts": {
+    "build": "node tools/build-card.mjs",
+    "pack": "node tools/pack-card.mjs",
+    "build:my": "node tools/build-card.mjs cards/my-card && node tools/pack-card.mjs cards/my-card",
+    "build:all": "for d in cards/*/; do case \"$d\" in cards/_*) continue;; esac; [ -d \"${d}src\" ] && node tools/build-card.mjs \"$d\"; done && node tools/generate-manifest.mjs",
+    "manifest": "node tools/generate-manifest.mjs",
+    "build:examples": "for d in examples/*/; do node tools/build-card.mjs \"$d\"; done"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.0",
+    "fflate": "^0.8.2",
+    "vite": "^5.3.0"
+  }
+}

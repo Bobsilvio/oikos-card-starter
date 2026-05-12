@@ -1,0 +1,67 @@
+name: validate-registry
+
+on:
+  pull_request:
+    paths:
+      - 'registry/cards'
+      - 'registry/html-cards'
+      - 'registry/smart-cards'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate format
+        run: |
+          set -e
+          ERRORS=0
+
+          validate_file() {
+            local FILE="$1"
+            echo "→ Validating $FILE"
+            while IFS= read -r line || [ -n "$line" ]; do
+              [[ -z "$line" || "$line" == \#* ]] && continue
+              if ! echo "$line" | grep -qE '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$'; then
+                echo "  ✗ Invalid: '$line'  (expected: author/repo)"
+                ERRORS=$((ERRORS + 1))
+              fi
+            done < "$FILE"
+            echo "  ✓ $FILE format OK"
+          }
+
+          for f in registry/cards registry/html-cards registry/smart-cards; do
+            [ -f "$f" ] && validate_file "$f"
+          done
+
+          [ "$ERRORS" -gt 0 ] && { echo "✗ $ERRORS error(s). Fix and push again."; exit 1; }
+          echo "✓ All files valid."
+
+      - name: Check alphabetical order
+        run: |
+          set -e
+          ERRORS=0
+
+          check_sorted() {
+            local FILE="$1"
+            local entries
+            entries=$(grep -v '^\s*#' "$FILE" | grep -v '^\s*$' || true)
+            [ -z "$entries" ] && return
+            local sorted
+            sorted=$(echo "$entries" | sort -f)
+            if [ "$entries" != "$sorted" ]; then
+              echo "  ✗ $FILE is not alphabetical. Expected:"
+              echo "$sorted" | sed 's/^/    /'
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "  ✓ $FILE sorted"
+            fi
+          }
+
+          for f in registry/cards registry/html-cards registry/smart-cards; do
+            [ -f "$f" ] && check_sorted "$f"
+          done
+
+          [ "$ERRORS" -gt 0 ] && exit 1
+          echo "✓ Order OK."

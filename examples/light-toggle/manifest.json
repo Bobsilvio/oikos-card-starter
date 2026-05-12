@@ -1,0 +1,14 @@
+{
+  "id": "light-toggle",
+  "name": "Light Toggle",
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "On/off toggle for a HA light with animation and callService. Demonstrates bidirectional Home Assistant interaction.",
+  "sdkVersion": "^1.1.0",
+  "hasSettings": true,
+  "entry": "dist/light-toggle.js",
+  "settings": "dist/light-toggle.settings.js",
+  "tags": ["example", "lights", "controls"],
+  "configVersion": 1,
+  "defaultWidth": "half"
+}

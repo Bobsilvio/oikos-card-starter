@@ -1,0 +1,14 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "Minimal card: no HA interaction, just a configurable text. The simplest possible starting point.",
+  "sdkVersion": "^1.1.0",
+  "hasSettings": true,
+  "entry": "dist/hello-world.js",
+  "settings": "dist/hello-world.settings.js",
+  "tags": ["esempio"],
+  "configVersion": 1,
+  "defaultWidth": "half"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "sensor-display",
+  "name": "Sensor Display",
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "Shows a HA sensor value with icon, unit and state badge. Demonstrates reading Home Assistant data.",
+  "sdkVersion": "^1.1.0",
+  "hasSettings": true,
+  "entry": "dist/sensor-display.js",
+  "settings": "dist/sensor-display.settings.js",
+  "tags": ["esempio", "sensori"],
+  "configVersion": 1,
+  "defaultWidth": "half"
+}

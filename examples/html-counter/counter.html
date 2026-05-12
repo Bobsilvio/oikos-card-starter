@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="version" content="1.0.0">
+<meta name="author" content="Oikos Starter">
+<meta name="description" content="HA sensor counter with 24h sparkline and tap → more-info">
+<title>HA Counter</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: transparent;
+  }
+  * { box-sizing: border-box; }
+
+  .card {
+    padding: 16px 18px;
+    color: #e2e8f0;
+    background: #0f172a;
+    border-radius: 16px;
+    height: 100%;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .card.light { color: #0f172a; background: #f8fafc; }
+  .card:hover { transform: translateY(-1px); }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    opacity: .55;
+  }
+  .value {
+    font-size: 36px;
+    font-weight: 700;
+    margin-top: 4px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .unit { font-size: 14px; opacity: .6; margin-left: 4px; font-weight: 500; }
+  .delta {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .delta.up   { color: #22c55e; background: rgba(34,197,94,.12); }
+  .delta.down { color: #ef4444; background: rgba(239,68,68,.12); }
+  .delta.flat { opacity: .5; }
+
+  .chart { margin-top: auto; padding-top: 12px; }
+  .chart svg { display: block; width: 100%; height: 48px; }
+
+  .empty {
+    opacity: .35;
+    font-size: 13px;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  .badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    opacity: .4;
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="root">
+    <div class="row">
+      <div>
+        <div class="label" id="label">Sensor</div>
+        <div class="value" id="value">— <span class="unit" id="unit"></span></div>
+      </div>
+      <div class="delta flat" id="delta">—</div>
+    </div>
+
+    <div class="chart" id="chart"></div>
+
+    <div class="badge" id="entity-id">…</div>
+  </div>
+
+<script>
+  // === CONFIG ===
+  // Change this value to point to your sensor.
+  // Tip: the user can also rename it via the HTML card Settings.
+  const ENTITY = 'sensor.living_room_temperature'
+
+  // === STATE ===
+  let lastState = null
+
+  // === DOM refs ===
+  const root  = document.getElementById('root')
+  const label = document.getElementById('label')
+  const value = document.getElementById('value')
+  const unit  = document.getElementById('unit')
+  const delta = document.getElementById('delta')
+  const chart = document.getElementById('chart')
+  const badge = document.getElementById('entity-id')
+  badge.textContent = ENTITY
+
+  // === SVG sparkline (zero dependencies) ===
+  function sparkline(data, w, h) {
+    if (!data || data.length < 2) return ''
+    const xs = data.map(p => p.x), ys = data.map(p => p.y)
+    const xMin = Math.min(...xs), xMax = Math.max(...xs)
+    const yMin = Math.min(...ys), yMax = Math.max(...ys)
+    const yRange = yMax - yMin || 1
+
+    const pts = data.map(p => {
+      const x = ((p.x - xMin) / (xMax - xMin || 1)) * w
+      const y = h - ((p.y - yMin) / yRange) * h
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+
+    // Area under the line
+    const area = `M0,${h} L${pts.split(' ').join(' L')} L${w},${h} Z`
+
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="${area}" fill="rgba(245,158,11,.15)" />
+      <polyline points="${pts}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`
+  }
+
+  // === Render current value ===
+  function renderState(states, dark) {
+    root.className = 'card' + (dark ? '' : ' light')
+
+    const st = states?.[ENTITY]
+    if (!st) {
+      label.textContent = 'Sensor not found'
+      value.innerHTML = '— <span class="unit"></span>'
+      return
+    }
+
+    // Label = friendly_name if available
+    label.textContent = st.attributes?.friendly_name || ENTITY
+
+    const numeric = parseFloat(st.state)
+    const unitOfMeasure = st.attributes?.unit_of_measurement || ''
+
+    if (Number.isFinite(numeric)) {
+      value.innerHTML = `${numeric.toFixed(1)}<span class="unit">${unitOfMeasure}</span>`
+
+      if (lastState != null && Number.isFinite(lastState)) {
+        const diff = numeric - lastState
+        if (Math.abs(diff) < 0.05) {
+          delta.className = 'delta flat'
+          delta.textContent = '—'
+        } else if (diff > 0) {
+          delta.className = 'delta up'
+          delta.textContent = '↑ ' + diff.toFixed(1)
+        } else {
+          delta.className = 'delta down'
+          delta.textContent = '↓ ' + Math.abs(diff).toFixed(1)
+        }
+      }
+      lastState = numeric
+    } else {
+      value.innerHTML = `${st.state}<span class="unit">${unitOfMeasure}</span>`
+      delta.className = 'delta flat'
+      delta.textContent = '—'
+    }
+  }
+
+  // === Render sparkline from history ===
+  function renderHistory(data) {
+    if (!data || data.length < 2) {
+      chart.innerHTML = '<div class="empty">No history available</div>'
+      return
+    }
+    // 600×48 logical units, scales via preserveAspectRatio
+    chart.innerHTML = sparkline(data, 600, 48)
+  }
+
+  // === Bridge: dashboard → iframe ===
+  window.addEventListener('message', ev => {
+    const msg = ev.data
+    if (!msg || typeof msg !== 'object') return
+
+    if (msg.type === 'hass-update') {
+      renderState(msg.states, msg.dark)
+    }
+
+    if (msg.type === 'history-update' && msg.entityId === ENTITY) {
+      renderHistory(msg.data)
+    }
+  })
+
+  // === Init: set fixed height + request 24h history ===
+  function init() {
+    window.parent.postMessage({ type: 'set-height', height: 180 }, '*')
+
+    window.parent.postMessage({
+      type: 'request-history',
+      entityId: ENTITY,
+      hours: 24,
+    }, '*')
+
+    // Refresh history every 5 minutes
+    setInterval(() => {
+      window.parent.postMessage({
+        type: 'request-history',
+        entityId: ENTITY,
+        hours: 24,
+      }, '*')
+    }, 5 * 60 * 1000)
+  }
+
+  // === Tap → open native HA more-info ===
+  root.addEventListener('click', () => {
+    window.parent.postMessage({
+      type: 'open-more-info',
+      entityId: ENTITY,
+    }, '*')
+  })
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
+  }
+</script>
+</body>
+</html>
