@@ -83,6 +83,12 @@ function main() {
     totalBytes += addFile(`dist/${key}.settings.js`, settingsFile)
   }
 
+  // Logo (logo.png / jpg / gif / webp / svg)
+  for (const ext of ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']) {
+    const p = join(cardDir, `logo.${ext}`)
+    if (existsSync(p)) { totalBytes += addFile(`logo.${ext}`, p); break }
+  }
+
   // Preview principale + alternative numerate
   for (const name of ['preview.png', 'preview-thumb.png']) {
     const p = join(cardDir, name)

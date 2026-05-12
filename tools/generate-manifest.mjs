@@ -46,6 +46,10 @@ function collectCards() {
     const distSet = join(dir, 'dist', `${key}.settings.js`)
     const preview = join(dir, 'preview.png')
     const thumb   = join(dir, 'preview-thumb.png')
+    // Logo: piccola icona/brand della card (diverso dalla preview screenshot)
+    const logoExts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+    const logoFile = logoExts.map(e => join(dir, `logo.${e}`)).find(existsSync)
+    const logoExt  = logoFile ? logoFile.split('.').pop() : null
 
     // Collect additional previews: preview-2.{png,gif}, preview-3.{png,gif}, …
     // Stops at the first gap in the sequence.
@@ -78,6 +82,7 @@ function collectCards() {
       preview:     existsSync(preview) ? `cards/${name}/preview.png` : null,
       previews:    previews.length > 0 ? previews : null,
       thumbnail:   existsSync(thumb)   ? `cards/${name}/preview-thumb.png` : null,
+      logo:        logoFile             ? `cards/${name}/logo.${logoExt}` : null,
       tags:        mf.tags ?? [],
       package:     mf.package ?? null,
       tier:        mf.tier ?? 'free',

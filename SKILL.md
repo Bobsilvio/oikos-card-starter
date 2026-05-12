@@ -54,7 +54,11 @@ cards/my-card/
 ├── src/
 │   ├── Card.jsx             ← REQUIRED — default export
 │   └── Settings.jsx         ← OPTIONAL — default export
-├── preview.png              ← opt, 3:2 ratio, ≤200 KB
+├── logo.png                 ← opt, icona/brand della card (es. 128×128 px)
+│                               Accetta anche: .jpg .gif .webp .svg
+│                               Mostrata nell'intestazione del dettaglio e nel grid
+├── preview.png              ← opt, screenshot della card in funzione (3:2 ratio, ≤200 KB)
+│                               Mostrata nel dettaglio come anteprima separata dal logo
 └── template.yaml            ← opt, if the card needs HA packages
 ```
 

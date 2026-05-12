@@ -136,6 +136,11 @@ function buildRootManifest(mf, cardName, outDir) {
   const hasPreview  = existsSync(join(cardOut, 'preview.png'))
   const hasReadme   = existsSync(join(cardOut, 'README.md'))
 
+  // Logo (logo.png / logo.jpg / logo.gif / logo.webp / logo.svg)
+  const LOGO_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+  const logoFile  = LOGO_EXTS.map(e => join(cardOut, `logo.${e}`)).find(existsSync)
+  const logoExt   = logoFile ? logoFile.split('.').pop() : null
+
   // Raccoglie preview aggiuntive (preview-2.png, preview-3.gif, …)
   const previews = []
   if (hasPreview) previews.push(`cards/${cardName}/preview.png`)
@@ -168,6 +173,7 @@ function buildRootManifest(mf, cardName, outDir) {
       previews:    previews.length > 1 ? previews : null,
       thumbnail:   existsSync(join(cardOut, 'preview-thumb.png'))
                      ? `cards/${cardName}/preview-thumb.png` : null,
+      logo:        logoFile ? `cards/${cardName}/logo.${logoExt}` : null,
       tags:        mf.tags    ?? [],
       package:     mf.package ?? null,
       tier:        mf.tier    ?? 'free',
