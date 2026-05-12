@@ -176,9 +176,9 @@ jobs:
           done <<< "${{ steps.diff.outputs.repos }}"
           [ "$ERRORS" -gt 0 ] && exit 1
 
-  # ─── 3. Validate manifest.json for JAVA card repos ───────────────────────────
+  # ─── 3. Validate manifest.json / oikos.json for JAVA card repos ─────────────
   validate-manifest:
-    name: Validate manifest.json (JAVA cards)
+    name: Validate manifest.json / oikos.json (JAVA cards)
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -186,7 +186,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check manifest.json of new JAVA card repos
+      - name: Check manifest.json or oikos.json of new JAVA card repos
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -201,37 +201,55 @@ jobs:
 
           while IFS= read -r repo || [ -n "$repo" ]; do
             [ -z "$repo" ] && continue
-            echo "→ Fetching manifest.json for $repo"
 
-            # Try root manifest.json first, then cards/*/manifest.json via API
+            # ── Try manifest.json first (Oikos Vite format) ──────────────────
+            echo "→ Checking $repo"
             manifest=$(curl -s \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github.raw" \
               "https://api.github.com/repos/$repo/contents/manifest.json" 2>/dev/null || true)
 
-            if [ -z "$manifest" ] || echo "$manifest" | grep -q '"message"'; then
-              echo "  ⚠  No root manifest.json found — skipping manifest check for $repo"
+            if [ -n "$manifest" ] && ! echo "$manifest" | grep -q '"message"'; then
+              # Validate Oikos manifest required fields
+              for field in id name version sdkVersion entry; do
+                if ! echo "$manifest" | grep -q "\"$field\""; then
+                  echo "  ✗ manifest.json missing required field: $field"
+                  ERRORS=$((ERRORS + 1))
+                fi
+              done
+              sdkVersion=$(echo "$manifest" | grep '"sdkVersion"' | grep -oP '"\^\d+\.\d+\.\d+"|"\d+\.\d+\.\d+"' | tr -d '"' || true)
+              if [ -z "$sdkVersion" ]; then
+                echo "  ✗ sdkVersion missing or invalid format (expected e.g. \"^1.1.0\")"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "  ✓ sdkVersion: $sdkVersion"
+              fi
+              echo "  ✓ manifest.json valid for $repo"
               continue
             fi
 
-            # Validate required fields
-            for field in id name version sdkVersion entry; do
-              if ! echo "$manifest" | grep -q "\"$field\""; then
-                echo "  ✗ manifest.json missing required field: $field"
-                ERRORS=$((ERRORS + 1))
-              fi
-            done
+            # ── Fallback: oikos.json (bundle JS singolo, es. webpack/rollup) ─
+            oikos=$(curl -s \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github.raw" \
+              "https://api.github.com/repos/$repo/contents/oikos.json" 2>/dev/null || true)
 
-            # Validate sdkVersion format (must start with ^ or be semver)
-            sdkVersion=$(echo "$manifest" | grep '"sdkVersion"' | grep -oP '"\^\d+\.\d+\.\d+"|"\d+\.\d+\.\d+"' | tr -d '"' || true)
-            if [ -z "$sdkVersion" ]; then
-              echo "  ✗ sdkVersion missing or invalid format (expected e.g. \"^1.1.0\")"
-              ERRORS=$((ERRORS + 1))
-            else
-              echo "  ✓ sdkVersion: $sdkVersion"
+            if [ -n "$oikos" ] && ! echo "$oikos" | grep -q '"message"'; then
+              # Validate oikos.json required fields
+              for field in name filename; do
+                if ! echo "$oikos" | grep -q "\"$field\""; then
+                  echo "  ✗ oikos.json missing required field: $field"
+                  ERRORS=$((ERRORS + 1))
+                fi
+              done
+              echo "  ✓ oikos.json valid for $repo (bundle format)"
+              continue
             fi
 
-            echo "  ✓ manifest.json looks valid for $repo"
+            # Neither found
+            echo "  ✗ $repo has neither manifest.json nor oikos.json at repo root"
+            echo "    Oikos Vite cards need manifest.json; bundle cards need oikos.json."
+            ERRORS=$((ERRORS + 1))
           done <<< "$added"
 
           [ "$ERRORS" -gt 0 ] && exit 1
