@@ -5,7 +5,8 @@
 **Template + tooling per creare card community per [Oikos](https://github.com/Bobsilvio/oikos).**
 
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![SDK](https://img.shields.io/badge/SDK-1.x-orange?style=flat-square)](docs/02-sdk-reference.md)
+[![SDK](https://img.shields.io/badge/SDK-1.1+-orange?style=flat-square)](docs/02-sdk-reference.md)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-6366f1?style=flat-square&logo=anthropic)](https://claude.ai/code)
 
 [🇮🇹 Italiano](#-italiano) · [🇬🇧 English](#-english)
 
@@ -18,6 +19,33 @@
 Una "card community" è un bundle JavaScript ESM che la dashboard Oikos scarica una volta e importa a runtime. Ti dà accesso a tutto Home Assistant (stati, servizi, storico) tramite un SDK condiviso, senza dover ricompilare la dashboard.
 
 > **Dal clone alla card pubblica su GitHub: zero intermediari, aggiornamenti automatici per i tuoi utenti.**
+
+---
+
+### 🤖 Crea la tua card descrivendo cosa vuoi — Claude Code fa il resto
+
+Non devi sapere React, JavaScript o come funziona il build system. Cloni questo repo, apri **Claude Code** nella cartella e descrivi la card che vuoi in italiano:
+
+```
+"Crea una card che mostra la temperatura del soggiorno con uno sparkline 24h
+e un badge rosso lampeggiante se la finestra è aperta da più di 10 minuti."
+```
+
+Claude legge lo `SKILL.md` incluso nello starter (caricato automaticamente), scrive il codice, installa le dipendenze, lancia il build e ti consegna lo ZIP pronto da caricare in Oikos.
+
+```
+"Voglio una card con tre bottoni per accendere la luce cucina,
+spegnere tutti i dispositivi in standby e attivare la scena 'cinema'."
+```
+
+```
+"Card che mostra produzione FV istantanea, consumi e percentuale autoconsumo
+in una griglia 2×2 con colori che cambiano in base ai valori."
+```
+
+Funziona anche per card complesse: grafici storici, controlli interattivi, layout personalizzati, animazioni. **Nessuna conoscenza tecnica richiesta.**
+
+---
 
 Due percorsi a scelta:
 
@@ -206,6 +234,33 @@ Il dashboard legge quei file per listare le sorgenti disponibili nello Store.
 A community card is a JavaScript ESM bundle that the Oikos dashboard downloads once and imports at runtime. It gives you full access to Home Assistant (states, services, history) via a shared SDK — no need to recompile the dashboard.
 
 > **From clone to a publicly shared card on GitHub — no middlemen, automatic updates for your users.**
+
+---
+
+### 🤖 Build your card by describing what you want — Claude Code does the rest
+
+No React, JavaScript or build toolchain knowledge required. Clone this repo, open **Claude Code** in the folder and describe the card you want in plain language:
+
+```
+"Create a card that shows the living room temperature with a 24h sparkline
+and a red blinking badge if the window has been open for more than 10 minutes."
+```
+
+Claude reads the `SKILL.md` bundled in this starter (loaded automatically), writes the code, installs dependencies, runs the build and delivers a ZIP ready to upload into Oikos.
+
+```
+"I want a card with three buttons: turn on the kitchen light,
+turn off all standby devices, and activate the 'cinema' scene."
+```
+
+```
+"Card showing instant solar production, consumption and self-consumption percentage
+in a 2×2 grid with colors that change based on values."
+```
+
+Works for complex cards too: historical charts, interactive controls, custom layouts, animations. **No technical knowledge required.**
+
+---
 
 Two paths to choose from:
 
