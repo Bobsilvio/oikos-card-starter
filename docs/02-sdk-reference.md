@@ -85,6 +85,18 @@ const [bool, setBool, exists] = useHaBool('input_boolean.notify_enabled')
 
 Installer YAML per card che richiedono package HA. Vedi [`docs/03-patterns.md`](./03-patterns.md#card-con-package-yaml).
 
+#### `<PackageSection pkg label description? />`
+
+Sezione standard installazione package. **Usare sempre questo componente** — non implementare UI pkg custom.
+Va posizionato come **primo elemento** del return in Settings.jsx.
+Fornisce automaticamente: status, banner aggiornamento, Installa/Reinstalla/Disinstalla, precheck, feedback.
+
+```jsx
+import { usePackageInstaller, PackageSection } from '@oikos/sdk'
+const pkg = usePackageInstaller({ name: 'my_pkg', yaml: TPL })
+<PackageSection pkg={pkg} label="Package HA" description="Installs HA entities." />
+```
+
 #### `registerCardWatcher(descriptor)`
 
 Registra un watcher globale per popup auto-driven da stati HA. Vedi `docs/03-patterns.md`.
@@ -339,6 +351,18 @@ Setters call `set_value` / `turn_on` / `turn_off`. `exists` indicates whether th
 #### `usePackageInstaller(opts)`
 
 YAML installer for cards that require HA packages (counters, automations, template sensors). See [`docs/03-patterns.md`](./03-patterns.md#card-con-package-yaml).
+
+#### `<PackageSection pkg label description? />`
+
+Standard package install UI. **Always use this component** — never implement custom pkg UI.
+Place it as the **first element** in the Settings.jsx return, before all other Sections.
+Handles automatically: install status, update banner, Install/Reinstall/Uninstall buttons, precheck warning, operation feedback.
+
+```jsx
+import { usePackageInstaller, PackageSection } from '@oikos/sdk'
+const pkg = usePackageInstaller({ name: 'my_pkg', yaml: TPL })
+<PackageSection pkg={pkg} label="HA Package" description="Installs HA entities." />
+```
 
 #### `registerCardWatcher(descriptor)`
 

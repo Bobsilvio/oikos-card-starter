@@ -176,6 +176,7 @@ import {
   useHaNumber,          // bind input_number.X
   useHaBool,            // bind input_boolean.X
   usePackageInstaller,  // YAML installer (for cards that create HA entities)
+  PackageSection,       // standard install/reinstall/uninstall/update UI — always use this, never roll your own
 
   // Settings primitives
   Section, Field, SettingsRow,
@@ -218,7 +219,9 @@ Questions to ask (or infer from context):
 7. **Store tags?** `energy`, `home`, `climate`, etc.
 8. **HA package needed?** Does it need to create counters/automations on HA?
    If yes → `template.yaml` with `# oikos:package_version: 1.0.0` header +
-   `usePackageInstaller` in Settings
+   `usePackageInstaller` in Settings + `<PackageSection pkg={pkg} .../>` as the
+   **first element** in the Settings return (before all other Sections).
+   `PackageSection` provides install/reinstall/uninstall/update UI automatically.
 9. **Distribution?** GitHub Release or private ZIP?
 
 Output to produce:

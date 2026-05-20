@@ -183,8 +183,7 @@ input_number:
 #### `cards/<id>/src/Settings.jsx`
 
 ```jsx
-import { useCardConfig, Section, SettingsRow, usePackageInstaller } from '@oikos/sdk'
-import { Download } from 'lucide-react'
+import { useCardConfig, usePackageInstaller, PackageSection } from '@oikos/sdk'
 import TPL from '../template.yaml?raw'
 
 export default function MySettings({ cardId }) {
@@ -192,19 +191,20 @@ export default function MySettings({ cardId }) {
   const pkg = usePackageInstaller({ name: 'mio_package', yaml: TPL })
 
   return (
-    <Section title="Package Home Assistant">
-      <SettingsRow
-        label={pkg.installed ? `Installato v${pkg.installedVersion}` : 'Non installato'}
-        hint={pkg.path}
-      >
-        <button onClick={pkg.install}>
-          <Download size={12}/> {pkg.installed ? 'Reinstalla' : 'Installa'}
-        </button>
-      </SettingsRow>
-    </Section>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* PackageSection SEMPRE prima di tutto il resto */}
+      <PackageSection
+        pkg={pkg}
+        label="Package Home Assistant"
+        description="Installa le entità HA necessarie alla card."
+      />
+      {/* ... altre Section ... */}
+    </div>
   )
 }
 ```
+
+`PackageSection` gestisce automaticamente: stato installato, banner aggiornamento, pulsanti Installa / Reinstalla / Disinstalla, warning precheck `configuration.yaml`, messaggio operazione.
 
 ---
 
@@ -503,8 +503,7 @@ input_number:
 #### `cards/<id>/src/Settings.jsx`
 
 ```jsx
-import { useCardConfig, Section, SettingsRow, usePackageInstaller } from '@oikos/sdk'
-import { Download } from 'lucide-react'
+import { useCardConfig, usePackageInstaller, PackageSection } from '@oikos/sdk'
 import TPL from '../template.yaml?raw'
 
 export default function MySettings({ cardId }) {
@@ -512,30 +511,24 @@ export default function MySettings({ cardId }) {
   const pkg = usePackageInstaller({ name: 'my_package', yaml: TPL })
 
   return (
-    <Section title="Home Assistant Package">
-      <SettingsRow
-        label={pkg.installed ? `Installed v${pkg.installedVersion}` : 'Not installed'}
-        hint={pkg.path}
-      >
-        <button onClick={pkg.install}>
-          <Download size={12}/> {pkg.installed ? 'Reinstall' : 'Install'}
-        </button>
-      </SettingsRow>
-
-      {pkg.updateAvailable && (
-        <div style={{ padding: 10, background: 'rgba(16,185,129,.1)', borderRadius: 8 }}>
-          ⬆ Update available: v{pkg.installedVersion} → v{pkg.bundledVersion}
-          <button onClick={pkg.install}>Update</button>
-        </div>
-      )}
-    </Section>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* PackageSection MUST come first, before all other Sections */}
+      <PackageSection
+        pkg={pkg}
+        label="Home Assistant Package"
+        description="Installs the HA entities required by this card."
+      />
+      {/* ... other Sections ... */}
+    </div>
   )
 }
 ```
 
+`PackageSection` handles automatically: install status, update banner, Install / Reinstall / Uninstall buttons, `configuration.yaml` precheck warning, operation feedback message.
+
 The user clicks "Install" → the YAML file is written to `/config/packages/my_package.yaml`.
-Bumping `# oikos:package_version` in the YAML and rebuilding the card will show
-the "Package update available" banner.
+Bumping `# oikos:package_version` in the YAML and rebuilding the card will trigger
+the update banner on next settings open.
 
 ---
 
