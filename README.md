@@ -54,63 +54,31 @@ Due percorsi a scelta:
 
 ### 🤖 Quickstart con Claude Code
 
-#### Cosa serve una volta sola
+> Cosa serve: **[Claude Code](https://claude.ai/code)** *(abbonamento Pro richiesto)* + **Node.js 18+** ([nodejs.org](https://nodejs.org/)) + dashboard **Oikos** già installata in HA.
 
-1. **[Claude Code](https://claude.com/product/claude-code)** installato sul tuo computer
-2. **Node.js 18+** ([nodejs.org](https://nodejs.org/))
-3. La dashboard **Oikos** già installata in Home Assistant
+**1. Scarica questo repo come ZIP**
 
-#### I 4 passi
+GitHub → **Code → Download ZIP** → estrai la cartella.
 
-**1. Scarica lo starter**
+**2. Apri Claude Code e seleziona la cartella**
 
-```bash
-git clone https://github.com/Bobsilvio/oikos-card-starter my-card
-cd my-card
-```
-
-> Niente git? Scarica lo ZIP da GitHub → **Code → Download ZIP**, poi estrai.
-
-**2. Apri Claude Code nel folder**
-
-```bash
-claude
-```
-
-Lo skill `SKILL.md` nella root viene caricato automaticamente.
+Avvia Claude Code → clicca **Code** → seleziona la cartella estratta.
+Lo `SKILL.md` nella root viene caricato automaticamente.
 
 **3. Chiedi la card che vuoi**
-
-Esempi di prompt validi:
 
 > *"Crea una card che mostra la temperatura del soggiorno (`sensor.living_room_temperature`) con uno sparkline 24h."*
 
 > *"Voglio una card per accendere/spegnere `light.cucina` con un bottone grande."*
 
-Claude modifica i file, installa le dipendenze, lancia il build e ti dice il path dello ZIP.
-
-**4. Installa o pubblica**
-
-Per uso personale rapido:
-Oikos → **Store → Comunità → JAVA → Carica ZIP** → trascina il file generato.
-
-Per pubblicare e condividere con aggiornamenti automatici:
-→ Pusha il repo su GitHub, crea un tag `v1.0.0` → la CI pubblica la Release →
-gli utenti aggiungono il tuo URL nel dashboard.
-Vedi [docs/04-distribuzione.md](./docs/04-distribuzione.md).
-
-#### Power user: skill globale
-
-```bash
-mkdir -p ~/.claude/skills/oikos-card-starter
-cp /percorso/al/clone/oikos-card-starter/SKILL.md ~/.claude/skills/oikos-card-starter/
-```
+Claude scrive il codice, lancia il build e produce uno ZIP pronto da caricare in Oikos:
+**Store → Comunità → JAVA → Carica ZIP**.
 
 ### 🔧 Quickstart manuale
 
 ```bash
-git clone https://github.com/Bobsilvio/oikos-card-starter my-card
-cd my-card
+git clone https://github.com/Bobsilvio/oikos-card-starter
+cd oikos-card-starter
 npm install
 
 # Modifica cards/my-card/
@@ -269,71 +237,31 @@ Two paths to choose from:
 
 ### 🤖 Quickstart with Claude Code
 
-#### One-time requirements
+> Requirements: **[Claude Code](https://claude.ai/code)** *(Pro subscription required)* + **Node.js 18+** ([nodejs.org](https://nodejs.org/)) + **Oikos** dashboard already installed in Home Assistant.
 
-1. **[Claude Code](https://claude.com/product/claude-code)** installed on your computer
-2. **Node.js 18+** ([nodejs.org](https://nodejs.org/))
-3. **Oikos** dashboard already installed in Home Assistant
+**1. Download this repo as a ZIP**
 
-#### The 4 steps
+GitHub → **Code → Download ZIP** → extract the folder.
 
-**1. Clone the starter**
+**2. Open Claude Code and select the folder**
 
-```bash
-git clone https://github.com/Bobsilvio/oikos-card-starter my-card
-cd my-card
-```
-
-> No git? Download the ZIP from GitHub → **Code → Download ZIP**, then extract.
-
-**2. Open Claude Code in the folder**
-
-```bash
-claude
-```
-
-The `SKILL.md` skill in the root is loaded automatically — Claude already knows the Oikos SDK, build system, and HA patterns.
+Launch Claude Code → click **Code** → select the extracted folder.
+The `SKILL.md` in the root is loaded automatically.
 
 **3. Ask for the card you want**
 
-Example prompts:
-
-> *"Create a card that shows the living room temperature (`sensor.living_room_temperature`) with a 24h sparkline and tap → more-info."*
+> *"Create a card that shows the living room temperature (`sensor.living_room_temperature`) with a 24h sparkline."*
 
 > *"I want a card to toggle `light.kitchen` on/off with a large button."*
 
-> *"Card listing all sensors starting with `sensor.sm_fv_` in a grid with value + unit + icon."*
-
-Claude will:
-- Edit `cards/my-card/manifest.json`
-- Write `cards/my-card/src/Card.jsx`
-- Add `cards/my-card/src/Settings.jsx` if needed
-- Run `npm install` the first time
-- Run `npm run build:my` → produces `dist-cards/my-card-X.Y.Z.zip`
-- Tell you the exact ZIP path
-
-**4. Install or publish**
-
-For quick personal use:
-Oikos → **Store → Community → JAVA → Upload ZIP** → drag the generated file.
-
-To publish and share with automatic updates:
-→ Push the repo to GitHub, create a `v1.0.0` tag → CI publishes the Release →
-users add your URL in the dashboard.
-See [docs/04-distribuzione.md](./docs/04-distribuzione.md).
-
-#### Power user: install the skill globally
-
-```bash
-mkdir -p ~/.claude/skills/oikos-card-starter
-cp /path/to/clone/oikos-card-starter/SKILL.md ~/.claude/skills/oikos-card-starter/
-```
+Claude writes the code, runs the build and produces a ZIP ready to upload into Oikos:
+**Store → Community → JAVA → Upload ZIP**.
 
 ### 🔧 Manual quickstart
 
 ```bash
-git clone https://github.com/Bobsilvio/oikos-card-starter my-card
-cd my-card
+git clone https://github.com/Bobsilvio/oikos-card-starter
+cd oikos-card-starter
 npm install
 
 # Edit cards/my-card/
