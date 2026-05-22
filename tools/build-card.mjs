@@ -17,7 +17,7 @@ import { build } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve, join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import oikosSdk from './vite-plugin-oikos-sdk.js'
 import { checkStarterVersion } from './check-version.mjs'
 
@@ -97,6 +97,18 @@ async function main() {
   }
 
   console.log(`✓ dist/${fsKey}.js ready`)
+
+  // Auto-bump patch dopo ogni build riuscita — garantisce cache-bust nel
+  // pluginLoader (usa ?v=<version>) anche senza pubblicare su GitHub.
+  // Salta solo se --no-bump è passato come argomento.
+  if (!process.argv.includes('--no-bump')) {
+    const parts = String(manifest.version ?? '0.0.0').split('.').map(Number)
+    while (parts.length < 3) parts.push(0)
+    parts[2] += 1
+    manifest.version = parts.join('.')
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+    console.log(`↑ version → ${manifest.version}`)
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
