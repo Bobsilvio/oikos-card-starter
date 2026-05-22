@@ -95,31 +95,39 @@ cards/my-card/
 
 ### `src/Card.jsx` (template)
 
+Always use `useStyles()` — never hardcode colors, radii, or font sizes.
+See **section 3b** for the full design system reference.
+
 ```jsx
-import { useState } from 'react'
-import { useCardConfig, useDashboard } from '@oikos/sdk'
+import { Thermometer } from 'lucide-react'
+import { useStyles, useCardConfig, useDashboard, registerCardTranslations, useT } from '@oikos/sdk'
+import it from './i18n/it.json'
+import en from './i18n/en.json'
+
+registerCardTranslations('card-my-card', { it, en })
 
 export default function MyCard({ cardId = 'my-card' }) {
-  const { dark, getState } = useDashboard()
+  const s = useStyles()
+  const { t } = useT('card-my-card')
+  const { getState } = useDashboard()
   const [config] = useCardConfig(cardId, { entityId: '' })
-
-  const cardBg = dark ? 'rgba(255,255,255,.04)' : '#fff'
-  const border  = dark ? 'rgba(255,255,255,.08)' : '#e2e8f0'
 
   if (!config.entityId) {
     return (
-      <div style={{ padding: 16, borderRadius: 14, background: cardBg, border: `1px solid ${border}`,
-                    color: 'var(--text-muted)', fontSize: 12, fontStyle: 'italic' }}>
-        ⚙ Configure an entity in the card settings
+      <div style={{ ...s.card, color: s.tokens.color.muted, fontSize: 12, fontStyle: 'italic' }}>
+        {t('noEntity')}
       </div>
     )
   }
 
   const value = getState(config.entityId)
   return (
-    <div style={{ padding: 16, borderRadius: 14, background: cardBg, border: `1px solid ${border}` }}>
-      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{config.entityId}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>{value ?? '—'}</div>
+    <div style={s.card}>
+      <div style={s.row}>
+        <Thermometer size={14} color={s.tokens.color.amber} />
+        <span style={s.label}>{t('label')}</span>
+      </div>
+      <div style={s.value}>{value ?? '—'}</div>
     </div>
   )
 }
@@ -190,6 +198,147 @@ import {
   registerCardWatcher,  // HA-state-driven auto popups
   MdiIcon,              // <MdiIcon name="mdi:weather-sunny" size={20}/>
 } from '@oikos/sdk'
+```
+
+---
+
+## 3b. Design system — visual alignment with Oikos
+
+**Rule: never hardcode colors, radii, or font sizes.** Always use `useStyles()`.
+This guarantees the card follows the user's current theme (dark/light) and
+future dashboard updates automatically.
+
+```js
+const s = useStyles()
+```
+
+### Preset styles (`s.*`)
+
+| Key | What it gives you |
+|---|---|
+| `s.card` | standard card wrapper — padding 16/20 px, radius 16 px, border, bg |
+| `s.cardGlass` | same + `backdropFilter: blur(20px)` for overlay use |
+| `s.row` | `flex, align-center, gap 8px` — use for header icon+label rows |
+| `s.rowBetween` | same + `justify-content: space-between` |
+| `s.col` | `flex-direction: column, gap 8px` |
+| `s.colTight` | same with `gap 4px` |
+| `s.grow` | `flex: 1, minWidth: 0` — fills remaining space |
+| `s.label` | 11 px · 700 · UPPERCASE · letter-spacing · muted color · mb 8px |
+| `s.title` | 15 px · 700 · primary color |
+| `s.value` | **40 px · 800 · tabular-nums · lineHeight 1** — main KPI number |
+| `s.valueAmber` | same in amber — energy, power, cost |
+| `s.valueGreen` | same in green — state on, positive delta |
+| `s.valueBlue` | same in blue — temperature, info metric |
+| `s.body` | 13 px · 500 — body text |
+| `s.hint` | 11 px · 500 · muted — secondary text, units |
+| `s.input` | full-width text input, theme-aware |
+| `s.select` | full-width `<select>`, theme-aware |
+| `s.slider` | `<input type="range">`, accent-color amber |
+| `s.buttonPrimary` | amber filled button (`color: '#000'`) |
+| `s.buttonGhost` | ghost button (border + bg-ghost) |
+| `s.iconButton` | transparent icon button |
+| `s.badgeAmber` | small amber badge (10 px · 700) |
+| `s.badgeGreen` | small green badge |
+
+### Tokens (`s.tokens.*`)
+
+```js
+s.tokens.color.primary    // var(--text-primary)
+s.tokens.color.muted      // var(--text-muted)
+s.tokens.color.amber      // var(--amber, #f59e0b)     ← default accent
+s.tokens.color.amberLight // var(--amber-light, rgba(245,158,11,.1))
+s.tokens.color.green      // var(--green, #22c55e)
+s.tokens.color.blue       // var(--blue, #3b82f6)
+s.tokens.color.purple     // var(--purple, #8b5cf6)
+s.tokens.color.red        // var(--red, #ef4444)
+s.tokens.color.border     // var(--border-medium, rgba(255,255,255,.08))
+
+s.tokens.radius.sm        // 8     s.tokens.radius.md // 12
+s.tokens.radius.lg        // 16    s.tokens.radius.xl // 20
+
+s.tokens.space.xs         // 4     s.tokens.space.sm  // 8
+s.tokens.space.md         // 12    s.tokens.space.lg  // 16
+s.tokens.space.xl         // 20    s.tokens.space.xxl // 24
+
+s.tokens.font.label       // { fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em' }
+s.tokens.font.value       // { fontSize:40, fontWeight:800, letterSpacing:'-1px', lineHeight:1 }
+s.tokens.font.body        // { fontSize:13, fontWeight:500 }
+s.tokens.font.hint        // { fontSize:11, fontWeight:500 }
+s.tokens.font.title       // { fontSize:15, fontWeight:700 }
+```
+
+### Color semantics — when to use which color
+
+| Color | Use for |
+|---|---|
+| **amber** | primary accent, energy/power values, icons in header rows, loading state |
+| **green** | entity on/active, positive trend, success state, import from grid (if FV) |
+| **blue** | temperature, humidity, info metrics, neutral measurement |
+| **red** | entity off/error, negative delta, alert, export to grid (if FV) |
+| **purple** | premium feature, advanced metric |
+| **muted** | secondary labels, units, hints, disabled state |
+
+### Standard card anatomy
+
+```
+┌─ s.card ───────────────────────────────┐
+│ s.row                                  │
+│   <Icon size={14} color={amber}/>      │ ← Lucide icon, 14px, amber
+│   <span style={s.label}>LABEL</span>   │ ← uppercase, muted
+│                                        │
+│ <div style={s.value}>42.3</div>        │ ← main number, 40px
+│ <span style={s.hint}>kWh</span>        │ ← unit, 11px muted
+└────────────────────────────────────────┘
+```
+
+### Complete example — sensor display
+
+```jsx
+import { Zap } from 'lucide-react'
+import { useStyles, useCardConfig, useDashboard, registerCardTranslations, useT } from '@oikos/sdk'
+import it from './i18n/it.json'
+import en from './i18n/en.json'
+
+registerCardTranslations('card-my-card', { it, en })
+
+export default function MyCard({ cardId = 'my-card' }) {
+  const s = useStyles()
+  const { t } = useT('card-my-card')
+  const { getState, getAttr } = useDashboard()
+  const [cfg] = useCardConfig(cardId, { entityId: '' })
+
+  const raw   = getState(cfg.entityId)
+  const unit  = getAttr(cfg.entityId, 'unit_of_measurement') ?? ''
+  const value = raw != null ? parseFloat(raw).toFixed(1) : '—'
+
+  return (
+    <div style={s.card}>
+      <div style={s.row}>
+        <Zap size={14} color={s.tokens.color.amber} />
+        <span style={s.label}>{t('label')}</span>
+      </div>
+      <div style={{ ...s.row, alignItems: 'baseline', gap: s.tokens.space.xs }}>
+        <span style={s.valueAmber}>{value}</span>
+        <span style={s.hint}>{unit}</span>
+      </div>
+    </div>
+  )
+}
+```
+
+### What NOT to do
+
+```jsx
+// ✗ hardcoded colors — breaks dark/light theme
+<div style={{ background: '#1e293b', border: '1px solid #334155', color: '#f8fafc' }}>
+
+// ✗ inline font sizes
+<div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b' }}>
+
+// ✓ always useStyles()
+<div style={s.card}>
+<div style={s.value}>
+<div style={{ color: s.tokens.color.amber }}>
 ```
 
 ---
