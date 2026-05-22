@@ -19,6 +19,7 @@ import { resolve, join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { readFileSync, existsSync } from 'fs'
 import oikosSdk from './vite-plugin-oikos-sdk.js'
+import { checkStarterVersion } from './check-version.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
@@ -63,6 +64,7 @@ async function buildEntry(entryPath, outName, outDir) {
 }
 
 async function main() {
+  await checkStarterVersion()
   const cardDir = process.argv[2]
   if (!cardDir) {
     console.error('Usage: node tools/build-card.mjs cards/<id>')

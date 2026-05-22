@@ -7,3 +7,4 @@ dist-cards/
 .env.local
 .vscode/
 .idea/
+.version-check
