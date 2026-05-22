@@ -343,6 +343,83 @@ export default function MyCard({ cardId = 'my-card' }) {
 
 ---
 
+## 3c. Mobile — designing cards that work on phones
+
+Oikos has an optional auto-scale system for mobile. Understanding how it works lets you build cards that look good **with or without scaling**.
+
+### How the scaling system works
+
+The dashboard scales cards only when **two or more cards are placed side by side in the same cell** (`cardCols > 1`). Single-column cards are **never scaled** — they must adapt to whatever width the container gives them.
+
+| Situation | Behaviour |
+|---|---|
+| `cardCols = 1` (single card) | No scale. Card fills container width. Must be fluid. |
+| `cardCols > 1` + scale ON | Probe render at full width → scale down proportionally. |
+| `cardCols > 1` + scale OFF | No scale. Card fills its grid slot (may overflow). |
+
+### Rules for fluid cards (cardCols = 1)
+
+Always write cards as if they own 100% of an unknown width. Never assume a fixed pixel width.
+
+```jsx
+// ✓ fluid container — adapts to any column width
+<div style={{ width: '100%', minWidth: 0 }}>
+
+// ✗ fixed width — breaks on narrow screens
+<div style={{ width: 320 }}>
+```
+
+**Recharts** — always use `ResponsiveContainer`, never set a fixed `width` on the chart:
+
+```jsx
+// ✓
+<ResponsiveContainer width="100%" height={120}>
+  <LineChart data={data}>...</LineChart>
+</ResponsiveContainer>
+
+// ✗ — recharts scrollWidth > containerW → triggers unwanted scale
+<LineChart width={300} height={120} data={data}>...</LineChart>
+```
+
+**Text** — use `overflow: hidden; textOverflow: ellipsis; whiteSpace: nowrap` on labels that can be long. Never let text force the container to grow.
+
+**Flex layouts** — always add `minWidth: 0` to flex children that contain text or charts:
+
+```jsx
+<div style={{ display: 'flex', gap: 8 }}>
+  <div style={{ flex: 1, minWidth: 0 }}>  {/* ✓ */}
+    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      {longEntityName}
+    </span>
+  </div>
+</div>
+```
+
+### Rules for multi-card cells (cardCols > 1)
+
+When the user places two cards side by side and scale is ON, the card is first rendered at its "natural" full-column width, then scaled down. The card should:
+
+- Have a sensible **minimum width** in its design (the probe renders at `containerW × cardCols`)
+- Not rely on `overflow: hidden` at the card root — scaling clips content otherwise
+- Use `useStyles()` sizes (`s.value`, `s.label`) so font sizes scale with the transform
+
+### What NOT to do on mobile
+
+```jsx
+// ✗ fixed pixel width on any inner element
+<div style={{ width: 300, height: 200 }}>
+
+// ✗ recharts with static width prop (causes false overflow detection)
+<BarChart width={280} height={100} />
+
+// ✗ position: absolute without a bounded parent — escapes the scaled container
+<div style={{ position: 'absolute', right: -10 }}>
+
+// ✓ all containers fluid, recharts via ResponsiveContainer
+```
+
+---
+
 ## 4. Procedures — when the user asks "create a card that..."
 
 Oikos supports three card formats. Pick the right one based on the user's request:
