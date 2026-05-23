@@ -420,6 +420,91 @@ When the user places two cards side by side and scale is ON, the card is first r
 
 ---
 
+## 3d. React — hooks rules (mandatory, enforced at runtime)
+
+React crashes with **error #310 ("Rendered more hooks than during the previous render")** if hooks are called in a different order between renders. This is the single most common bug in Oikos cards.
+
+### Rule: all hooks at the top, no exceptions
+
+Every `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, and SDK hook (`useCardConfig`, `useDashboard`, `useStyles`, `useT`, …) MUST be called **unconditionally, before any `return` statement**.
+
+```jsx
+// ✗ BROKEN — useEffect is after the early return → error #310 when entityId changes
+export default function MyCard({ cardId }) {
+  const s = useStyles()
+  const [cfg] = useCardConfig(cardId, DEFAULT)
+  const [localVal, setLocalVal] = useState(null)
+
+  if (!cfg.entityId) return <div>Configure entity…</div>   // ← early return
+
+  const brightness = getAttr(cfg.entityId, 'brightness')   // ← derived value
+
+  useEffect(() => {                                         // ← HOOK AFTER RETURN → crash
+    setLocalVal(null)
+  }, [brightness])
+  …
+}
+
+// ✓ CORRECT — all hooks first, then early return, then derived values
+export default function MyCard({ cardId }) {
+  const s = useStyles()
+  const { getState, getAttr } = useDashboard()
+  const [cfg] = useCardConfig(cardId, DEFAULT)
+  const [localVal, setLocalVal] = useState(null)
+  const draggingRef = useRef(false)
+
+  // Compute values needed by hooks BEFORE the early return, guard with cfg.entityId
+  const brightness = cfg.entityId ? getAttr(cfg.entityId, 'brightness') : undefined
+
+  useEffect(() => {                                // ← called every render, unconditionally
+    if (!draggingRef.current) setLocalVal(null)
+  }, [brightness])
+
+  if (!cfg.entityId) return <div>Configure entity…</div>  // ← safe early return
+
+  // All remaining derived values go here
+  const state = getState(cfg.entityId)
+  …
+}
+```
+
+### Pattern: "empty-state guard"
+
+```
+1. Call ALL hooks (useState, useEffect, useRef, useCardConfig, useDashboard, useStyles…)
+2. Compute any values that hooks depend on — guard with `cfg.entityId ? … : undefined`
+3. Early return for empty/unconfigured state
+4. Compute all remaining derived values
+5. Return main JSX
+```
+
+### What NOT to do
+
+```jsx
+// ✗ any hook after a conditional return
+if (!cfg.entityId) return …
+useEffect(…)           // crash: hook skipped on first render, called on second
+
+// ✗ hook inside a condition
+if (cfg.showChart) {
+  useEffect(…)         // crash: called only when showChart is true
+}
+
+// ✗ hook inside a loop
+data.forEach(item => {
+  const [v, setV] = useState(null)  // crash: called N times, N can change
+})
+```
+
+### Checklist before submitting a card
+
+- [ ] `useStyles()`, `useDashboard()`, `useCardConfig()`, `useT()` called before any `return`
+- [ ] Every `useState`, `useEffect`, `useRef`, `useMemo` called before any `return`
+- [ ] No hooks inside `if`, `for`, or callbacks
+- [ ] Values needed by `useEffect` deps are computed via ternary above the early return
+
+---
+
 ## 4. Procedures — when the user asks "create a card that..."
 
 Oikos supports three card formats. Pick the right one based on the user's request:
@@ -650,6 +735,55 @@ useEffect(() => {
 }, [config.entityId])
 ```
 
+### Popup / modal with createPortal
+
+Always use `getOverlayRoot()` as the portal target — never `document.body`.
+In panel mode the app runs inside a shadow DOM; portals to `document.body` lose
+all CSS variables and theme styles.
+
+The overlay root has `pointer-events: none` by default so empty modals don't block
+the UI. **The root element of every portal must declare `pointerEvents: 'auto'`**,
+otherwise clicks, drag-and-drop, and keyboard events are silently swallowed.
+
+```jsx
+import { createPortal } from 'react-dom'
+import { getOverlayRoot } from '@oikos/sdk'
+
+function MyModal({ onClose }) {
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 99996,
+        background: 'rgba(0,0,0,.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        pointerEvents: 'auto',   // ← MANDATORY — without this nothing is clickable
+      }}
+    >
+      <div onClick={e => e.stopPropagation()} style={{ ... }}>
+        {/* modal content */}
+      </div>
+    </div>,
+    getOverlayRoot(),             // ← never document.body
+  )
+}
+```
+
+Also: while the modal is open, prevent the browser from intercepting native
+drag-and-drop (Firefox opens a "save file" dialog otherwise):
+
+```jsx
+useEffect(() => {
+  const prevent = (e) => e.preventDefault()
+  window.addEventListener('dragover', prevent)
+  window.addEventListener('drop',     prevent)
+  return () => {
+    window.removeEventListener('dragover', prevent)
+    window.removeEventListener('drop',     prevent)
+  }
+}, [])
+```
+
 ### Card with installable YAML package
 
 ```jsx
@@ -756,6 +890,8 @@ See `docs/04-distribuzione.md` for the full guide.
 | Card not in Store after upload | Malformed `manifest.id` | Only `[a-z0-9_-]` + `/` for namespaced IDs |
 | `Cannot read properties of undefined (reading 'React')` | Card loaded outside dashboard | Cards run ONLY inside the Oikos dashboard, not standalone |
 | Bundle >200 KB | React/lucide being bundled | Verify the SDK plugin is active in `tools/build-card.mjs` |
+| Toggle does nothing (no visual change, no state update) | Wrong prop name | `<Toggle value={v} onChange={fn}/>` — NOT `checked`. SDK Toggle uses `value`/`onChange`, not the HTML checkbox API |
+| React error #310 (more hooks than previous render) | Hook after early return | All hooks must be called before any `return` — see §3d |
 
 ---
 
