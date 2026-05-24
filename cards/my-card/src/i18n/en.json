@@ -1,0 +1,9 @@
+{
+  "label": "Value",
+  "configure": "⚙ Configure an entity in the card settings",
+  "settings": {
+    "general": "General",
+    "entity": "Entity",
+    "entityHint": "Any HA sensor (sensor.*, binary_sensor.*, climate.*…)"
+  }
+}

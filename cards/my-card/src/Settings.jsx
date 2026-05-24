@@ -6,35 +6,33 @@
  * are imported from `@oikos/sdk` and match the dashboard style.
  *
  * useCardConfig automatically syncs config across all user devices
- * via the add-on server. Never write to localStorage directly — data
- * would not propagate to other devices.
+ * via the add-on server. Never write to localStorage directly.
+ *
+ * i18n: all user-visible strings must use useT(). Never hardcode text.
  */
 import {
   useCardConfig, EntityField,
-  Section, Field, TextField,
+  Section, Field,
+  registerCardTranslations, useT,
 } from '@oikos/sdk'
+import it from './i18n/it.json'
+import en from './i18n/en.json'
+
+registerCardTranslations('card-my-card', { it, en })
 
 const DEFAULT_CONFIG = {
   entityId: '',
-  label:    'My Card',
 }
 
 export default function MySettings({ cardId }) {
+  const { t } = useT('card-my-card')
   const [config, setConfig] = useCardConfig(cardId, DEFAULT_CONFIG)
-  const set = (k, v) => setConfig(p => ({ ...p, [k]: v }))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      <Section title="General">
-        <Field label="Label">
-          <TextField
-            value={config.label}
-            onChange={v => set('label', v)}
-            placeholder="My Card"
-          />
-        </Field>
-        <Field label="Entity" hint="Any sensor.* / binary_sensor.* / climate.* etc.">
+      <Section title={t('settings.general')}>
+        <Field label={t('settings.entity')} hint={t('settings.entityHint')}>
           <EntityField
             field="entityId"
             config={config}

@@ -498,6 +498,10 @@ data.forEach(item => {
 
 ### Checklist before submitting a card
 
+- [ ] `src/i18n/it.json` AND `src/i18n/en.json` exist — never hardcode user-visible strings
+- [ ] `registerCardTranslations('card-<id>', { it, en })` called at module top (both Card.jsx and Settings.jsx)
+- [ ] All user-visible strings use `useT()` — no hardcoded text in any language
+- [ ] `useStyles()` used for all colors, radii, font sizes — no hardcoded CSS values
 - [ ] `useStyles()`, `useDashboard()`, `useCardConfig()`, `useT()` called before any `return`
 - [ ] Every `useState`, `useEffect`, `useRef`, `useMemo` called before any `return`
 - [ ] No hooks inside `if`, `for`, or callbacks

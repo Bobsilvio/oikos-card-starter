@@ -1,0 +1,9 @@
+{
+  "label": "Valore",
+  "configure": "⚙ Configura un'entità nelle impostazioni",
+  "settings": {
+    "general": "Generale",
+    "entity": "Entità",
+    "entityHint": "Qualsiasi sensore HA (sensor.*, binary_sensor.*, climate.*…)"
+  }
+}

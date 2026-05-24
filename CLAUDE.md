@@ -33,6 +33,11 @@ dettagliate in `SKILL.md`** (root di questo repo).
 
 ## Vincoli importanti
 
+- **i18n OBBLIGATORIO** — ogni stringa visibile all'utente deve usare `useT()`.
+  Crea `src/i18n/it.json` E `src/i18n/en.json`. Mai hardcodare testo in nessuna lingua.
+  Pattern: `registerCardTranslations('card-<id>', { it, en })` in cima al file.
+- **useStyles() OBBLIGATORIO** — mai hardcodare colori, border-radius o font-size.
+  Usa sempre `s.card` / `s.label` / `s.value` / `s.tokens.*`
 - **Mai** importare React/lucide/recharts da `node_modules`: solo via
   `import ... from '@oikos/sdk'` o `import { useState } from 'react'`
   (il vite plugin riscrive a `window.__OIKOS_SDK__`)

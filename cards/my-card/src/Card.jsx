@@ -5,43 +5,42 @@
  * See `examples/` for more complex patterns (sensor chart, controls, popups).
  *
  * ─────────────────────────────────────────────────────────────────────────
- * RULE: always use useCardConfig to persist card settings.
- * Never write to localStorage directly — data won't sync across the user's
- * devices (PC, phone, tablet). useCardConfig saves to the Oikos add-on
- * server and all devices receive the same config at boot, automatically.
+ * RULES:
+ * 1. i18n MANDATORY — every user-visible string must come from useT().
+ *    Add keys to src/i18n/it.json AND src/i18n/en.json.
+ *    Never hardcode text in any language.
+ *
+ * 2. useStyles() — never hardcode colors, radii or font sizes.
+ *    Always use s.card / s.label / s.value / s.tokens.*
+ *
+ * 3. useCardConfig — never write to localStorage directly.
+ *    Data syncs across all user devices automatically.
  * ─────────────────────────────────────────────────────────────────────────
  */
-import { useCardConfig, useDashboard } from '@oikos/sdk'
+import { useCardConfig, useDashboard, useStyles, registerCardTranslations, useT } from '@oikos/sdk'
 import { Sparkles } from 'lucide-react'
+import it from './i18n/it.json'
+import en from './i18n/en.json'
+
+registerCardTranslations('card-my-card', { it, en })
 
 const DEFAULT_CONFIG = {
   entityId: '',
-  label:    'My Card',
 }
 
 export default function MyCard({ cardId = 'my-card' }) {
-  const { dark, getState } = useDashboard()
+  const s = useStyles()
+  const { t } = useT('card-my-card')
+  const { getState } = useDashboard()
   const [config] = useCardConfig(cardId, DEFAULT_CONFIG)
 
-  const cardBg = dark ? 'rgba(255,255,255,.04)' : '#ffffff'
-  const border = dark ? 'rgba(255,255,255,.08)' : '#e2e8f0'
-
-  // Empty state: invite the user to configure an entity
+  // Empty state — entity not configured yet
   if (!config.entityId) {
     return (
-      <div style={{
-        padding: 18, borderRadius: 14,
-        background: cardBg, border: `1px solid ${border}`,
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <Sparkles size={22} style={{ color: 'var(--amber)' }}/>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {config.label}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-            ⚙ Configure an entity in the card settings
-          </div>
+      <div style={s.card}>
+        <div style={s.row}>
+          <Sparkles size={14} color={s.tokens.color.amber}/>
+          <span style={s.label}>{t('configure')}</span>
         </div>
       </div>
     )
@@ -50,28 +49,15 @@ export default function MyCard({ cardId = 'my-card' }) {
   const value = getState(config.entityId)
 
   return (
-    <div style={{
-      padding: 18, borderRadius: 14,
-      background: cardBg, border: `1px solid ${border}`,
-    }}>
-      <div style={{
-        fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
-        textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6,
-      }}>
-        {config.label}
+    <div style={s.card}>
+      <div style={s.row}>
+        <Sparkles size={14} color={s.tokens.color.amber}/>
+        <span style={s.label}>{t('label')}</span>
       </div>
-      <div style={{
-        fontSize: 28, fontWeight: 800, color: 'var(--text-primary)',
-        fontVariantNumeric: 'tabular-nums',
-      }}>
-        {value ?? '—'}
+      <div style={{ ...s.row, alignItems: 'baseline', gap: s.tokens.space.xs }}>
+        <span style={s.value}>{value ?? '—'}</span>
       </div>
-      <div style={{
-        fontSize: 10, color: 'var(--text-muted)',
-        fontFamily: 'monospace', marginTop: 4,
-      }}>
-        {config.entityId}
-      </div>
+      <div style={s.hint}>{config.entityId}</div>
     </div>
   )
 }
