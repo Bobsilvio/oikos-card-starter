@@ -1,5 +1,5 @@
 /**
- * Controlla 1 volta al giorno se esiste una versione più recente di
+ * Controlla 3 volte al giorno se esiste una versione più recente di
  * oikos-card-starter su GitHub. Non blocca la build in caso di errore/timeout.
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs'
@@ -22,12 +22,14 @@ function semverGt(a, b) {
 }
 
 export async function checkStarterVersion() {
-  const today = new Date().toISOString().slice(0, 10)
+  // Slot orario 0-7 → slot 0, 8-15 → slot 1, 16-23 → slot 2 (3 check/giorno)
+  const now   = new Date()
+  const slot  = `${now.toISOString().slice(0, 10)}-${Math.floor(now.getUTCHours() / 8)}`
 
   if (existsSync(SENTINEL)) {
     try {
       const s = JSON.parse(readFileSync(SENTINEL, 'utf-8'))
-      if (s.date === today) return
+      if (s.slot === slot) return
     } catch {}
   }
 
@@ -38,16 +40,16 @@ export async function checkStarterVersion() {
       `https://api.github.com/repos/${REPO}/releases/latest`,
       { headers: { 'User-Agent': 'oikos-card-starter' }, signal: AbortSignal.timeout(4000) },
     )
-    if (!res.ok) { writeFileSync(SENTINEL, JSON.stringify({ date: today })); return }
+    if (!res.ok) { writeFileSync(SENTINEL, JSON.stringify({ slot })); return }
     const data   = await res.json()
     const latest = (data.tag_name ?? '0.0.0').replace(/^v/, '')
-    writeFileSync(SENTINEL, JSON.stringify({ date: today, latest }))
+    writeFileSync(SENTINEL, JSON.stringify({ slot, latest }))
     if (semverGt(latest, local)) {
       console.warn(`\n⚠  oikos-card-starter ${local} → ${latest} disponibile.`)
       console.warn(`   Aggiorna con:  git pull\n`)
     }
   } catch {
     // rete assente o timeout — non blocca build
-    try { writeFileSync(SENTINEL, JSON.stringify({ date: today })) } catch {}
+    try { writeFileSync(SENTINEL, JSON.stringify({ slot })) } catch {}
   }
 }
