@@ -16,6 +16,16 @@ git fetch origin --quiet && git log HEAD..origin/main --oneline
   `git clone https://github.com/Bobsilvio/oikos-card-starter.git`
 - Se è già aggiornato: non dire nulla, procedi.
 
+## Pre-create checklist (OBBLIGATORIA)
+
+Prima di scrivere qualsiasi card che usi primitivi SDK (ColorCircles, Pills, EntityField,
+recharts, hooks React), esegui questi passi nell'ordine:
+
+1. `grep -i "crash\|MUST\|never\|gotcha\|✗" SKILL.md` — leggi ogni riga trovata
+2. Leggi **§3b** (design tokens), **§3d** (hooks rules), **§7** (troubleshooting)
+3. Verifica shape prop: `ColorCircles` vuole `{label, value}[]`, mai stringhe plain;
+   `useMemo`/`useEffect`/`useState` devono stare PRIMA di qualsiasi `return`
+
 ---
 
 Questo è uno starter kit per creare card community per la dashboard
