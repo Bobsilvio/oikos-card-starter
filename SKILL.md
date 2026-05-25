@@ -437,48 +437,51 @@ When the user places two cards side by side and scale is ON, the card is first r
 
 ## 3d. React — hooks rules (mandatory, enforced at runtime)
 
-React crashes with **error #310 ("Rendered more hooks than during the previous render")** if hooks are called in a different order between renders. This is the single most common bug in Oikos cards.
+React crashes with **"Invalid hook call" (error #310)** when hooks are called conditionally or after an early return. This is the single most common bug in Oikos cards.
 
 ### Rule: all hooks at the top, no exceptions
 
 Every `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, and SDK hook (`useCardConfig`, `useDashboard`, `useStyles`, `useT`, …) MUST be called **unconditionally, before any `return` statement**.
 
 ```jsx
-// ✗ BROKEN — useEffect is after the early return → error #310 when entityId changes
-export default function MyCard({ cardId }) {
-  const s = useStyles()
-  const [cfg] = useCardConfig(cardId, DEFAULT)
-  const [localVal, setLocalVal] = useState(null)
-
-  if (!cfg.entityId) return <div>Configure entity…</div>   // ← early return
-
-  const brightness = getAttr(cfg.entityId, 'brightness')   // ← derived value
-
-  useEffect(() => {                                         // ← HOOK AFTER RETURN → crash
-    setLocalVal(null)
-  }, [brightness])
-  …
-}
-
-// ✓ CORRECT — all hooks first, then early return, then derived values
+// ✗ BROKEN — useMemo and useEffect are after the early return → "Invalid hook call" (#310)
 export default function MyCard({ cardId }) {
   const s = useStyles()
   const { getState, getAttr } = useDashboard()
   const [cfg] = useCardConfig(cardId, DEFAULT)
-  const [localVal, setLocalVal] = useState(null)
-  const draggingRef = useRef(false)
+  const [data, setData] = useState([])
 
-  // Compute values needed by hooks BEFORE the early return, guard with cfg.entityId
-  const brightness = cfg.entityId ? getAttr(cfg.entityId, 'brightness') : undefined
+  if (!cfg.entityId) return <div>Configure entity…</div>   // ← early return
 
-  useEffect(() => {                                // ← called every render, unconditionally
-    if (!draggingRef.current) setLocalVal(null)
-  }, [brightness])
+  const rawState = getState(cfg.entityId)                   // ← non-hook (safe here)
 
-  if (!cfg.entityId) return <div>Configure entity…</div>  // ← safe early return
+  const value = useMemo(() => parseFloat(rawState), [rawState])  // ← HOOK AFTER RETURN → crash
+  useEffect(() => { setData([]) }, [cfg.entityId])               // ← HOOK AFTER RETURN → crash
+}
 
-  // All remaining derived values go here
-  const state = getState(cfg.entityId)
+// ✓ CORRECT — all hooks (including useMemo) before any return
+export default function MyCard({ cardId }) {
+  const s = useStyles()
+  const { getState, getAttr } = useDashboard()
+  const [cfg] = useCardConfig(cardId, DEFAULT)
+  const [data, setData] = useState([])
+
+  // useMemo and useEffect BEFORE the early return, guard with ternary when needed
+  const rawState = cfg.entityId ? getState(cfg.entityId) : null
+  const value = useMemo(() => {
+    if (rawState == null) return '—'
+    return parseFloat(rawState).toFixed(1)
+  }, [rawState])
+
+  useEffect(() => {
+    if (!cfg.entityId) { setData([]); return }
+    // fetch data …
+  }, [cfg.entityId])
+
+  if (!cfg.entityId) return <div>Configure entity…</div>   // ← safe early return
+
+  // Non-hook derived values can go after the guard
+  const unit = getAttr(cfg.entityId, 'unit_of_measurement') ?? ''
   …
 }
 ```
@@ -486,19 +489,21 @@ export default function MyCard({ cardId }) {
 ### Pattern: "empty-state guard"
 
 ```
-1. Call ALL hooks (useState, useEffect, useRef, useCardConfig, useDashboard, useStyles…)
-2. Compute any values that hooks depend on — guard with `cfg.entityId ? … : undefined`
+1. Call ALL hooks (useState, useEffect, useRef, useMemo, useCardConfig, useDashboard, useStyles…)
+2. Compute any values hooks depend on — guard with `cfg.entityId ? … : null` if needed
 3. Early return for empty/unconfigured state
-4. Compute all remaining derived values
+4. Compute non-hook derived values (getState, getAttr, plain JS expressions)
 5. Return main JSX
 ```
 
 ### What NOT to do
 
 ```jsx
-// ✗ any hook after a conditional return
+// ✗ ANY hook after a conditional return — useMemo is a hook too
 if (!cfg.entityId) return …
+useMemo(…)             // crash: hook skipped when entityId is empty
 useEffect(…)           // crash: hook skipped on first render, called on second
+useState(…)            // crash
 
 // ✗ hook inside a condition
 if (cfg.showChart) {
@@ -518,9 +523,10 @@ data.forEach(item => {
 - [ ] All user-visible strings use `useT()` — no hardcoded text in any language
 - [ ] `useStyles()` used for all colors, radii, font sizes — no hardcoded CSS values
 - [ ] `useStyles()`, `useDashboard()`, `useCardConfig()`, `useT()` called before any `return`
-- [ ] Every `useState`, `useEffect`, `useRef`, `useMemo` called before any `return`
+- [ ] Every `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback` called before any `return`
 - [ ] No hooks inside `if`, `for`, or callbacks
-- [ ] Values needed by `useEffect` deps are computed via ternary above the early return
+- [ ] Values needed by `useEffect`/`useMemo` deps computed via ternary above the early return
+- [ ] **Double-check `useMemo`** — most common mistake: placed after early return thinking it's "just a const"
 
 ---
 
