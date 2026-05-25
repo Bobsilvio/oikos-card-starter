@@ -1,5 +1,23 @@
 # Oikos Card Starter — istruzioni per Claude Code
 
+## Aggiornamenti SDK — controlla a ogni sessione
+
+All'inizio di ogni sessione di lavoro in questo repo, esegui:
+
+```bash
+git fetch origin --quiet && git log HEAD..origin/main --oneline
+```
+
+- Se ci sono commit nuovi: avvisa l'utente con il numero di commit disponibili
+  e suggerisci `git pull` per aggiornare l'SDK prima di iniziare.
+- Se il repo non è un clone git (nessuna directory `.git`): avvisa l'utente
+  che ha scaricato uno ZIP e suggerisci di clonare il repo per ricevere
+  gli aggiornamenti automatici:
+  `git clone https://github.com/Bobsilvio/oikos-card-starter.git`
+- Se è già aggiornato: non dire nulla, procedi.
+
+---
+
 Questo è uno starter kit per creare card community per la dashboard
 **Oikos** (Home Assistant). Quando l'utente apre Claude Code in questo
 folder e chiede di creare/modificare una card, **segui le istruzioni
