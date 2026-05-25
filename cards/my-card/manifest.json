@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "Your Name",
   "description": "Starter template — edit me!",
-  "sdkVersion": "^1.1.0",
+  "sdkVersion": "^1.2.0",
   "hasSettings": true,
   "entry": "dist/my-card.js",
   "settings": "dist/my-card.settings.js",

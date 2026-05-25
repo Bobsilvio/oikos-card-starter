@@ -171,8 +171,10 @@ import { Sun, Lightbulb, Power, Thermometer } from 'lucide-react'
 // Recharts
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
-// Framer Motion
-import { motion, AnimatePresence } from 'framer-motion'
+// Framer Motion — use ONLY for complex gesture-driven animations (drag, spring physics).
+// For simple show/hide / hover effects: prefer CSS transitions (transition, opacity, transform).
+// Never use framer-motion as a default — it adds bundle weight and complexity.
+// import { motion, AnimatePresence } from 'framer-motion'
 
 // Oikos SDK
 import {
@@ -199,6 +201,19 @@ import {
   MdiIcon,              // <MdiIcon name="mdi:weather-sunny" size={20}/>
 } from '@oikos/sdk'
 ```
+
+---
+
+---
+
+## 3a. Rules — what NOT to do
+
+- **No `framer-motion` by default.** Use CSS `transition` / `opacity` / `transform` for hover and show/hide effects. Only import framer-motion for complex gesture-driven animations (spring drag, shared layout). Commented-out import above shows the syntax if truly needed.
+- **No third-party libraries** beyond React, lucide-react, recharts, framer-motion. Everything else must be hand-rolled or come from `@oikos/sdk`.
+- **`ColorCircles` colors prop must be `{label, value}[]`.** Never pass plain strings. Use `ACCENT_COLORS` as default or extend it: `[...ACCENT_COLORS, { label: 'Custom', value: '#ff0000' }]`. Passing `['#ff0000']` crashes with `c.value.toLowerCase is not a function`.
+- **No hardcoded Italian or English strings.** Every user-visible string through `useT()`. Keys in both `i18n/it.json` AND `i18n/en.json`.
+- **No direct localStorage / sessionStorage.** Use `useCardConfig` only.
+- **Keep cards focused.** One card = one concern. Don't build an entire dashboard in one component.
 
 ---
 
