@@ -559,18 +559,155 @@ Questions to ask (or infer from context):
    **first element** in the Settings return (before all other Sections).
    `PackageSection` provides install/reinstall/uninstall/update UI automatically.
 9. **Distribution?** GitHub Release or private ZIP?
+10. **Companion badge?** Ask: *"Vuoi anche un badge (distintivo) abbinato a questa card?"*
+    If yes → follow **section 4d-badge** to generate `badge-manifest.json` alongside the card.
+    A companion badge typically shows the card's main entity value in the badge strip.
+11. **Companion chip?** Ask: *"Vuoi anche un chip nella Navbar abbinato?"*
+    If yes → follow **section 4d-chip** to generate a chip JSON snippet.
+    A companion chip sits in the top navigation bar and shows a live value or toggles an entity.
 
 Output to produce:
 - `cards/<id>/manifest.json`
 - `cards/<id>/src/Card.jsx`
 - `cards/<id>/src/Settings.jsx` (if `hasSettings: true`)
 - `cards/<id>/template.yaml` (if HA package needed)
+- `badge-manifest.json` (if companion badge requested — section 4d)
+- `chip-config.json` (if companion chip requested — section 4d)
 
 Then suggest:
 ```bash
 npm run build cards/<id>/
 npm run pack  -- cards/<id>
 ```
+
+---
+
+### 4d. Companion assets — badge e chip
+
+Generate these **only if the user confirms** (questions 10–11 above).
+They are independent of the card build — no Vite, no compilation.
+
+---
+
+#### 4d-badge — Companion badge (distintivo)
+
+A badge is a small reactive pill in the badge strip above/below dashboard pages.
+Output: a `badge-manifest.json` the user imports via **Store → Distintivi → Importa ZIP**.
+
+```json
+{
+  "id":          "<card-id>-badge",
+  "name":        "<Card Name> — badge",
+  "version":     "1.0.0",
+  "author":      "<same as card>",
+  "description": "Badge abbinato alla card <Card Name>.",
+  "config": {
+    "entity":      "<main entity of the card>",
+    "icon":        "<mdiXxx — camelCase MDI name>",
+    "label":       "<SHORT_LABEL>",
+    "color":       "<semantic color: blue|amber|green|red|gray|…>",
+    "size":        "md",
+    "displayMode": "full",
+    "pulse":       false,
+    "template":    "{value}",
+    "format":      "auto",
+    "decimals":    1,
+    "unit":        "<unit or empty string>",
+    "tap_action":  { "action": "more-info", "target": "" }
+  }
+}
+```
+
+**Packaging:**
+```
+badge-<card-id>-1.0.0.zip
+└── badge-manifest.json
+```
+Install: Dashboard → Store → Distintivi → Importa ZIP.
+
+**Color semantics** (pick by entity domain / meaning):
+| Color | Use for |
+|---|---|
+| `blue` | temperature, humidity, info sensors |
+| `amber` | power, energy, heating |
+| `green` | entity on/active, positive metric |
+| `red` | alert, error, entity off (when off = bad) |
+| `lime` | solar, outdoor, production |
+| `gray` | neutral, unavailable, unknown |
+| `cyan` | water, network |
+| `indigo` | climate, HVAC |
+
+For a **multi-entity popup badge** (sensors popup, like "luci accese"):
+```json
+{
+  "id":          "<card-id>-popup-badge",
+  "name":        "<Card Name> — popup badge",
+  "version":     "1.0.0",
+  "author":      "<same as card>",
+  "description": "Badge con popup multi-entità abbinato a <Card Name>.",
+  "config": {
+    "entity":      "<primary entity>",
+    "icon":        "<mdiXxx>",
+    "label":       "<LABEL>",
+    "color":       "amber",
+    "size":        "md",
+    "displayMode": "icon_value",
+    "pulse":       false,
+    "format":      "auto",
+    "decimals":    0,
+    "unit":        "",
+    "tap_action":  { "action": "more-info", "target": "" },
+    "sensors": [
+      { "id": "<entity_1>", "name": "" },
+      { "id": "<entity_2>", "name": "" }
+    ],
+    "colorRules": {
+      "enabled": true,
+      "allOff":  "gray",
+      "anyOn":   "amber"
+    }
+  }
+}
+```
+
+---
+
+#### 4d-chip — Companion chip (Navbar)
+
+A chip is a small interactive pill in the **top navigation bar** of the Oikos dashboard.
+Chips are stored locally — they cannot be distributed as a ZIP.
+Output: a `chip-config.json` snippet the user pastes in the Chip editor
+(**Navbar → ⚙ → Aggiungi chip → incolla JSON**) or enters manually field by field.
+
+```json
+{
+  "name":        "<Chip name>",
+  "description": "<One line description>",
+  "config": {
+    "entity":      "<main entity of the card>",
+    "icon":        "<mdi-kebab-case name — e.g. 'solar-power', 'lightbulb', 'thermometer'>",
+    "label":       "<SHORT>",
+    "displayMode": "icon_value",
+    "size":        "md",
+    "color":       "<semantic color>",
+    "format":      "auto",
+    "decimals":    1,
+    "unit":        ""
+  }
+}
+```
+
+> **Note:** `icon` for chips uses **kebab-case** (e.g. `solar-power`, `lightbulb`),
+> NOT camelCase like badges (`mdiSolarPower`). The chip renderer calls the MDI icon
+> registry with lowercase-hyphenated names.
+
+> **popupCardId:** If the chip should open a popup panel card on tap, add
+> `"popupCardId": "<the cardId of the target popup-panel card>"` to the config.
+> Omit this field for a simple tap → more-info chip.
+
+**Installation:** The user copies the JSON, then:
+Dashboard → Navbar → ⚙ (edit chips) → "Aggiungi chip" → fill in fields matching the JSON.
+There is no import-from-JSON yet — the user enters values manually using the config as a guide.
 
 ---
 
