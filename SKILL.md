@@ -268,6 +268,10 @@ s.tokens.color.purple     // var(--purple, #8b5cf6)
 s.tokens.color.red        // var(--red, #ef4444)
 s.tokens.color.border     // var(--border-medium, rgba(255,255,255,.08))
 
+// Overlay / componenti (per popup e toggle che fai a mano)
+// var(--overlay-scrim)  ← velo dietro modali/sheet  (NON rgba(0,0,0,.x))
+// var(--knob)           ← pallino bianco dei toggle  (NON #fff / var(--bg-card))
+
 s.tokens.radius.sm        // 8     s.tokens.radius.md // 12
 s.tokens.radius.lg        // 16    s.tokens.radius.xl // 20
 
@@ -355,6 +359,14 @@ export default function MyCard({ cardId = 'my-card' }) {
 <div style={s.value}>
 <div style={{ color: s.tokens.color.amber }}>
 ```
+
+> **Temi custom.** La dashboard supporta temi personalizzati che sovrascrivono
+> a runtime le CSS variables (`--bg-*`, `--text-*`, `--border*`, `--amber`,
+> `--green/--blue/--purple/--red`, `--overlay-scrim`, `--knob`). Una card che
+> usa SOLO `s.*` / `s.tokens.*` / `var(--…)` segue automaticamente ogni tema.
+> Ogni hex o `rgba()` hardcoded per un colore tematico la fa "uscire" dal tema:
+> NON farlo. Eccezione: palette di scelta colore esposte all'utente (es. accent
+> selezionabile per la card) e decorazioni pure (es. confetti).
 
 ---
 
