@@ -83,6 +83,28 @@ cards/my-card/
 
 `defaultWidth`: `"sm" | "half" | "lg" | "full"`.
 
+### Package type — card, chip or badge
+
+A store package can be a **card** (default), a **chip** (Navbar pill) or a
+**badge** (badge bar). Set `manifest.type`:
+
+```json
+{ "id": "my-chip", "type": "chip", "entry": "dist/my-chip.js", ... }
+```
+
+- `type` omitted or `"card"` → normal card (rendered in the layout grid).
+- `type: "chip"` → injected into the chip registry; appears in the "add chip"
+  picker; rendered in the Navbar chip row as **`<Default/>`** (no props).
+- `type: "badge"` → injected into the badge registry; appears in the "add badge"
+  picker; rendered in the badge bar as **`<Default dark={dark} />`**.
+
+Build, packaging and install are identical to a card (vite-plugin-oikos-sdk,
+default export, `@oikos/sdk`, zip → Store). Chips/badges are **self-contained**:
+they read their own entities via SDK hooks (`useDashboard`, `useHass`). They have
+no per-instance settings panel in the bars — keep config inside the component
+(e.g. read a fixed set of entities, or `useCardConfig('<id>')` if needed).
+Use only theme CSS variables / `s.tokens.*` so they follow custom themes.
+
 **Store policy (validated at install time):**
 - `id` regex: `^[a-z0-9][a-z0-9_-]{0,63}$` — lowercase, hyphens/underscores only.
   Namespaced IDs use `__` as the filesystem separator (e.g. `owner__card-name`).
