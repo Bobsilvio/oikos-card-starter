@@ -63,29 +63,31 @@ cards/my-card/
 └── CHANGELOG.md             ← opt ma RACCOMANDATO — cronologia versioni, mostrata nello store
 ```
 
-### `CHANGELOG.md` — cronologia versioni (mostrata nello store)
+### `CHANGELOG.md` — version history (shown in the store)
 
-Ogni card dovrebbe avere un `CHANGELOG.md` in stile [Keep a Changelog](https://keepachangelog.com/it/1.0.0/). Lo store lo mostra quando si apre la card (sezione "Novità") ed evidenzia le voci più recenti della versione installata, così l'utente vede cosa cambia **prima** di aggiornare.
+Every card should have a `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) style. The store shows it when a card is opened ("What's new" section) and highlights entries newer than the installed version, so the user sees what changed **before** updating.
+
+**Write changelog entries in English** — it is the default language displayed in the store.
 
 ```markdown
 # Changelog — My Card
 
 ## [1.1.0] - 2026-06-08
 ### Added
-- Nuova modalità X.
+- New mode X.
 ### Fixed
-- Y non funzionava in tema chiaro.
+- Y didn't work in light theme.
 
 ## [1.0.0] - 2026-05-01
 ### Added
-- Prima versione.
+- First version.
 ```
 
-Regole:
-- Header versione: `## [x.y.z] - AAAA-MM-GG` (la più recente in alto). La versione DEVE combaciare con `manifest.json`.
-- Le righe `- ...` sotto ogni versione sono le modifiche (i sotto-header `### Added/Changed/Fixed` sono opzionali e ignorati dal parser).
-- `pack-card.mjs` lo include nello ZIP e inietta il `changelog` parsato dentro `manifest.json`; `generate-manifest.mjs` lo aggrega nel manifest del repo. **Non scrivere il campo `changelog` a mano nel manifest** — viene generato dal `.md`.
-- **Ad ogni bump di versione: aggiungi una voce in cima al `CHANGELOG.md`.**
+Rules:
+- Version header: `## [x.y.z] - YYYY-MM-DD` (newest on top). The version MUST match `manifest.json`.
+- The `- ...` lines under each version are the changes (the `### Added/Changed/Fixed` sub-headers are optional and ignored by the parser).
+- `pack-card.mjs` includes it in the ZIP and injects the parsed `changelog` into `manifest.json`; `generate-manifest.mjs` aggregates it into the repo manifest. **Do not write the `changelog` field by hand in the manifest** — it is generated from the `.md`.
+- **On every version bump: add a new entry on top of `CHANGELOG.md`.**
 
 ### Minimal `manifest.json`
 
