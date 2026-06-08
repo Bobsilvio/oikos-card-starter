@@ -2,7 +2,7 @@
   "repo": "my-oikos-cards",
   "version": "1.0.0",
   "sdkVersion": "1.0.0",
-  "updated": "2026-05-12",
+  "updated": "2026-06-08",
   "cards": [
     {
       "id": "my-card",
@@ -10,7 +10,7 @@
       "version": "1.0.0",
       "author": "Your Name",
       "description": "Starter template — edit me!",
-      "sdkVersion": "^1.1.0",
+      "sdkVersion": "^1.2.0",
       "hasSettings": true,
       "path": "cards/my-card",
       "entry": "cards/my-card/dist/my-card.js",
@@ -25,6 +25,15 @@
       ],
       "package": null,
       "tier": "free",
+      "changelog": [
+        {
+          "version": "1.0.0",
+          "date": "2026-01-01",
+          "changes": [
+            "Prima versione della card."
+          ]
+        }
+      ],
       "readme": null
     }
   ]

@@ -59,8 +59,33 @@ cards/my-card/
 │                               Mostrata nell'intestazione del dettaglio e nel grid
 ├── preview.png              ← opt, screenshot della card in funzione (3:2 ratio, ≤200 KB)
 │                               Mostrata nel dettaglio come anteprima separata dal logo
-└── template.yaml            ← opt, if the card needs HA packages
+├── template.yaml            ← opt, if the card needs HA packages
+└── CHANGELOG.md             ← opt ma RACCOMANDATO — cronologia versioni, mostrata nello store
 ```
+
+### `CHANGELOG.md` — cronologia versioni (mostrata nello store)
+
+Ogni card dovrebbe avere un `CHANGELOG.md` in stile [Keep a Changelog](https://keepachangelog.com/it/1.0.0/). Lo store lo mostra quando si apre la card (sezione "Novità") ed evidenzia le voci più recenti della versione installata, così l'utente vede cosa cambia **prima** di aggiornare.
+
+```markdown
+# Changelog — My Card
+
+## [1.1.0] - 2026-06-08
+### Added
+- Nuova modalità X.
+### Fixed
+- Y non funzionava in tema chiaro.
+
+## [1.0.0] - 2026-05-01
+### Added
+- Prima versione.
+```
+
+Regole:
+- Header versione: `## [x.y.z] - AAAA-MM-GG` (la più recente in alto). La versione DEVE combaciare con `manifest.json`.
+- Le righe `- ...` sotto ogni versione sono le modifiche (i sotto-header `### Added/Changed/Fixed` sono opzionali e ignorati dal parser).
+- `pack-card.mjs` lo include nello ZIP e inietta il `changelog` parsato dentro `manifest.json`; `generate-manifest.mjs` lo aggrega nel manifest del repo. **Non scrivere il campo `changelog` a mano nel manifest** — viene generato dal `.md`.
+- **Ad ogni bump di versione: aggiungi una voce in cima al `CHANGELOG.md`.**
 
 ### Minimal `manifest.json`
 

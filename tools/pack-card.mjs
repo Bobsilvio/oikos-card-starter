@@ -32,6 +32,34 @@ function fsKey(id) {
   return String(id).replace(/\//g, '__')
 }
 
+// Parsa un CHANGELOG.md "Keep a Changelog" → [{version,date,changes[]}] (max 10).
+function parseChangelog(cardDir, max = 10) {
+  const p = join(cardDir, 'CHANGELOG.md')
+  if (!existsSync(p)) return null
+  let text
+  try { text = readFileSync(p, 'utf-8') } catch { return null }
+  const entries = []
+  let cur = null
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    const h = line.match(/^##\s+\[?v?([0-9][0-9A-Za-z.\-]*)\]?\s*(?:[-–—]\s*(.+))?$/)
+    if (h) {
+      if (cur) entries.push(cur)
+      cur = { version: h[1], date: (h[2] || '').trim() || null, changes: [] }
+      continue
+    }
+    if (!cur) continue
+    const b = line.match(/^[-*]\s+(.+)$/)
+    if (b) {
+      const txt = b[1].replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/`(.+?)`/g, '$1').trim()
+      if (txt) cur.changes.push(txt)
+    }
+  }
+  if (cur) entries.push(cur)
+  const filtered = entries.filter(e => e.changes.length > 0).slice(0, max)
+  return filtered.length ? filtered : null
+}
+
 function main() {
   const cardArg = process.argv[2]
   if (!cardArg) {
@@ -74,8 +102,19 @@ function main() {
     return buf.byteLength
   }
 
+  const addBytes = (relPath, buf) => { files[relPath] = new Uint8Array(buf); return buf.byteLength }
+
+  // Se la card ha un CHANGELOG.md, lo parsiamo e iniettiamo `changelog` nel
+  // manifest.json dentro lo ZIP — così la cronologia versioni viaggia con la
+  // card ed è visibile nello store. Il file .md grezzo è incluso a parte.
+  const changelog = parseChangelog(cardDir)
   let totalBytes = 0
-  totalBytes += addFile('manifest.json', manifestPath)
+  if (changelog) {
+    const augmented = { ...manifest, changelog }
+    totalBytes += addBytes('manifest.json', strToU8(JSON.stringify(augmented, null, 2) + '\n'))
+  } else {
+    totalBytes += addFile('manifest.json', manifestPath)
+  }
   totalBytes += addFile(`dist/${key}.js`, entry)
 
   const settingsFile = join(distDir, `${key}.settings.js`)
@@ -102,7 +141,7 @@ function main() {
   }
 
   // Asset opzionali
-  for (const name of ['template.yaml', 'README.md']) {
+  for (const name of ['template.yaml', 'README.md', 'CHANGELOG.md']) {
     const p = join(cardDir, name)
     if (existsSync(p)) totalBytes += addFile(name, p)
   }
