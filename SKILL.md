@@ -40,9 +40,16 @@ oikos-card-starter/
 ```
 
 When the user says "create a card that does X":
-1. **Always** create (or edit) in `cards/my-card/` — this is the only working directory.
-2. Never create `cards/<other-name>/` during development. The user renames `my-card` to the final id only when ready to publish.
-3. After changes → suggest `npm run build:my` (build + pack ZIP in one step)
+1. **Ask for the card title first** — before writing any file.
+   Ask: *"Come si chiama la card? (es. Temperatura Soggiorno, Luci Cucina, Monitor Batterie)"*
+   Derive the folder id from the title: lowercase, spaces → hyphens, no special chars.
+   Example: "Temperatura Soggiorno" → id `temperatura-soggiorno`, folder `cards/temperatura-soggiorno/`.
+2. Create all files inside `cards/<id>/` using the derived id.
+3. After changes → suggest:
+   ```bash
+   npm run build cards/<id>/
+   npm run pack  -- cards/<id>
+   ```
 
 ---
 
@@ -627,20 +634,18 @@ Questions to ask (or infer from context):
     If yes → follow **section 4d-chip** to generate a chip JSON snippet.
     A companion chip sits in the top navigation bar and shows a live value or toggles an entity.
 
-Output to produce — **always inside `cards/my-card/`**:
-- `cards/my-card/manifest.json`
-- `cards/my-card/src/Card.jsx`
-- `cards/my-card/src/Settings.jsx` (if `hasSettings: true`)
-- `cards/my-card/template.yaml` (if HA package needed)
+Output to produce (replace `<id>` with the id derived from the card title):
+- `cards/<id>/manifest.json`
+- `cards/<id>/src/Card.jsx`
+- `cards/<id>/src/Settings.jsx` (if `hasSettings: true`)
+- `cards/<id>/template.yaml` (if HA package needed)
 - `badge-manifest.json` (if companion badge requested — section 4d)
 - `chip-config.json` (if companion chip requested — section 4d)
 
-> **Never** write `cards/<id>/` with a custom name — always `cards/my-card/`.
-> The user changes `manifest.id`, `manifest.name`, and renames the folder only before publishing.
-
 Then suggest:
 ```bash
-npm run build:my   # build + pack cards/my-card in one step
+npm run build cards/<id>/
+npm run pack  -- cards/<id>
 ```
 
 ---
